@@ -4,16 +4,27 @@ from random import uniform
 
 class Train:
 
-    def __init__(self, x0, y0, alpha0):
+    def __init__(self,
+                 x0,
+                 y0,
+                 alpha0,
+                 v_max,
+                 loc_max,
+                 ):
         self.alpha = alpha0  # строительная ось от оси x против часовой стрелки
         self.x = x0
         self.y = y0
+
+        self.v_max = v_max
+        self.loc_max = loc_max
+
         self.v = 10
         self.shape = None
         self.distance = None
         self.oneturncount = 0
         self.turn = 1
         self.maps = []
+        self.auto = True
 
     def update(self, x, y, distance=None):
         self.distance = distance
@@ -26,6 +37,13 @@ class Train:
         return {
             "params": (self.x, self.y, self.v, self.alpha),
             "maps": self.maps
+
+            # как должно выглядеть -- будет в следующих версиях
+            # "maps": {
+            #     "lines": [[(1,2),(3, 6), (4,9) ,(1,2)], [(3,15), ], [(3,5) ]],
+            #     "circles": [(xc,yc,r), (xc,yc,r)]
+            # }
+
         }
 
     def processing(self):

@@ -6,8 +6,8 @@ from math import sin, cos, sqrt, radians
 
 class UpdatedTrain(Train):
 
-    def __init__(self, x0, y0, alpha0, name="Unknown Train", color=(0, 0, 255)):
-        super().__init__(x0, y0, alpha0)
+    def __init__(self, x0, y0, alpha0, v_max, loc_max, name="Unknown Train", color=(0, 0, 255)):
+        super().__init__(x0, y0, alpha0, v_max, loc_max)
         self.name = name
         self.v = 0
         self.color = color
@@ -22,7 +22,7 @@ class Player:
         self.ray_length = 450
         # self.distance = None
         self.collision = None
-        self.train = UpdatedTrain(*position, angle, name, color)
+        self.train = UpdatedTrain(*position, angle, 10, self.ray_length, name, color)
 
         self.create_shapes()
         self.set_touchpoint_invisible()
