@@ -16,6 +16,8 @@ player_angle = radians(45)
 player_position = width // 2, height // 2
 
 window = pyglet.window.Window(width, height)
+pyglet.gl.glClearColor(1, 1, 1, 1)
+
 options = DrawOptions()
 batch = pyglet.graphics.Batch()
 
@@ -38,6 +40,16 @@ player = Player(
     angle=player_angle
 )
 
+bot = Player(
+    space=space,
+    position=(600, 600),
+    angle=-player_angle,
+    name="bot",
+    color=(0, 255, 0)
+)
+
+players = [player, bot]
+
 
 @window.event
 def on_draw():
@@ -57,22 +69,25 @@ def update(dt):
         player.position = player.position[0], player.position[1] - 10
 
     if key_handler[key.Q]:
-        player.train.angle += radians(5)
+        player.train.alpha += radians(5)
     if key_handler[key.E]:
-        player.train.angle -= radians(5)
+        player.train.alpha -= radians(5)
 
     if key_handler[key.SPACE]:
-        player.train.v = 0.0
+        for item in players:
+            item.train.v = 0.0
 
     if key_handler[key.B]:
-        player.train.v = 5.0
+        for item in players:
+            item.train.v = 5.0
 
-    info = player.update()
+    for item in players:
 
-    current_touch_points = set(info['maps'])
-    new_touch_points = list(current_touch_points - touch_points)
-    for touch_point in new_touch_points:
-        sprites.append(shapes.Circle(touch_point[0], touch_point[1], 3, color=(0, 255, 0), batch=batch))
+        data = item.update()
+
+        # отрисуем точки касания
+        for touch_point in list(data['new_touch_points']):
+            sprites.append(shapes.Circle(touch_point[0], touch_point[1], 3, color=item.train.color, batch=batch))
 
     space.step(dt)
 
