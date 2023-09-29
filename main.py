@@ -34,11 +34,14 @@ sprites = []
 scene = Scene()
 scene.set_default_scene(space=space, width=width, height=height, margin=20)
 
+players = []
+
 player = Player(
     space=space,
     position=player_position,
     angle=player_angle
 )
+players.append(player)
 
 bot = Player(
     space=space,
@@ -48,7 +51,17 @@ bot = Player(
     color=(0, 255, 0)
 )
 
-players = [player, bot]
+players.append(bot)
+
+bot_2 = Player(
+    space=space,
+    position=(700, 200),
+    angle=-player_angle + radians(30),
+    name="bot_2",
+    color=(255, 160, 0)
+)
+
+players.append(bot_2)
 
 
 @window.event
@@ -58,7 +71,12 @@ def on_draw():
     batch.draw()
 
 
+point_count = 0
+
+
 def update(dt):
+    global point_count
+
     if key_handler[key.LEFT]:
         player.position = player.position[0] - 10, player.position[1]
     if key_handler[key.RIGHT]:
@@ -85,9 +103,13 @@ def update(dt):
 
         data = item.update()
 
+        point_count += len(data['new_touch_points'])
         # отрисуем точки касания
         for touch_point in list(data['new_touch_points']):
             sprites.append(shapes.Circle(touch_point[0], touch_point[1], 3, color=item.train.color, batch=batch))
+
+    if point_count % 100 == 0 and point_count > 0:
+        print(f"point count: {point_count}")
 
     space.step(dt)
 
