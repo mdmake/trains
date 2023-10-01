@@ -7,7 +7,7 @@ from pymunk.pyglet_util import DrawOptions
 from game.scene import Scene
 from game.player import Player
 
-from math import radians, atan2, cos, sin, sqrt
+from math import radians
 
 width = 1280
 height = 720
@@ -23,6 +23,7 @@ batch = pyglet.graphics.Batch()
 
 key_handler = key.KeyStateHandler()
 window.push_handlers(key_handler)
+
 space = pymunk.Space()
 space.gravity = 0, -1000
 
@@ -42,6 +43,8 @@ player = Player(
     angle=player_angle
 )
 players.append(player)
+
+key_vector = {"x": 0.0, "y": 0.0, "alpha": 0.0}
 
 bot = Player(
     space=space,
@@ -74,30 +77,56 @@ def on_draw():
 point_count = 0
 
 
+@window.event
+def on_key_press(symbol, modifiers):
+    step = 10
+    angle_step = 5
+
+    if not player.train.auto:
+        if symbol == key.LEFT:
+            key_vector["x"] = -step
+        if symbol == key.RIGHT:
+            key_vector["x"] = step
+        if symbol == key.UP:
+            key_vector["y"] = step
+        if symbol == key.DOWN:
+            key_vector["y"] = -step
+        if symbol == key.Q:
+            key_vector["alpha"] = radians(angle_step)
+        if symbol == key.E:
+            key_vector["alpha"] = -radians(angle_step)
+
+    if symbol == key.SPACE:
+        if player.train.auto:
+            for item in players:
+                item.train.v = 0.0
+                item.train.auto = False
+        else:
+            for item in players:
+                item.train.v = 5.0
+                item.train.auto = True
+
+
+@window.event
+def on_key_release(symbol, modifiers):
+    if not player.train.auto:
+        if symbol == key.LEFT or symbol == key.RIGHT:
+            key_vector["x"] = 0
+        if symbol == key.UP or symbol == key.DOWN:
+            key_vector["y"] = 0
+        if symbol == key.Q or symbol == key.E:
+            key_vector["alpha"] = 0
+
+
 def update(dt):
     global point_count
 
-    if key_handler[key.LEFT]:
-        player.position = player.position[0] - 10, player.position[1]
-    if key_handler[key.RIGHT]:
-        player.position = player.position[0] + 10, player.position[1]
-    if key_handler[key.UP]:
-        player.position = player.position[0], player.position[1] + 10
-    if key_handler[key.DOWN]:
-        player.position = player.position[0], player.position[1] - 10
-
-    if key_handler[key.Q]:
-        player.train.alpha += radians(5)
-    if key_handler[key.E]:
-        player.train.alpha -= radians(5)
-
-    if key_handler[key.SPACE]:
-        for item in players:
-            item.train.v = 0.0
-
-    if key_handler[key.B]:
-        for item in players:
-            item.train.v = 5.0
+    if not player.train.auto:
+        player.train.manual_update(*[key_vector[k] for k in ["x", "y", "alpha"]])
+    else:
+        key_vector[0] = 0
+        key_vector[1] = 0
+        key_vector[2] = 0
 
     for item in players:
 
