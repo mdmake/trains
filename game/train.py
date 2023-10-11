@@ -25,7 +25,7 @@ class Train:
         self.distance = None
         self.oneturncount = 0
         self.turn = 1
-        self.maps = []
+        self.points = []
         self.auto = True
 
     def update(self, x: float, y: float):
@@ -48,16 +48,30 @@ class Train:
                     y_q + self.distance * sin(alpha_q)
                 )
 
-                self.maps.append(new_point)
+                self.points.append(new_point)
 
         else:
             self.distance = None
 
     def info(self) -> dict:
 
+        # TODO!
+        line1 = [(100, 200), (100, 300), (200, 300)]
+        line2 = [(150, 250), (150, 350), (250, 350)]
+        line3 = [(0, 0), (500, 500), (0, 1000)]
+        circle1 = ((100, 200), 20)  # (point, radius)
+        circle2 = ((200, 400), 30)  # (point, radius)
+        circle3 = ((400, 600), 40)  # (point, radius)
+
+        figures = {
+            "lines": [line1, line2, line3, ],  # не замкнутая
+            "circles": [circle1, circle2, circle3],
+            "points": self.points
+        }
+
         return {
             "params": (self.x, self.y, self.v, self.alpha),
-            "maps": self.maps
+            "maps": figures
         }
 
     def processing(self):

@@ -8,7 +8,7 @@ LocatorQuery = namedtuple('LocatorQuery', ['position', 'point0', 'point1'])
 class Locator:
 
     def __init__(self, range: float, blind_zone: float):
-        # мертвая зона перед самом локатором -- зона где он ничего не видит
+        # мертвая зона перед самим локатором -- зона где он ничего не видит
         self._blind_zone = blind_zone
         # максимальная дальность локатора
         self._range = range
@@ -54,14 +54,13 @@ class Locator:
     @property
     def blind_zone(self) -> float:
         """
-        Возвращает размер мертвой зоны
+        Размер мертвой зоны
         """
-
         return self._blind_zone
 
     @property
     def query(self) -> namedtuple:
         """
-        Возвращает последний запрос
+        Последний запрос
         """
         return self._query

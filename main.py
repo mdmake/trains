@@ -28,8 +28,6 @@ space = pymunk.Space()
 space.gravity = 0, -1000
 
 handler = space.add_default_collision_handler()
-
-touch_points = set()
 sprites = []
 
 scene = Scene()
@@ -48,7 +46,7 @@ key_vector = {"x": 0.0, "y": 0.0, "alpha": 0.0}
 
 bot = Player(
     space=space,
-    position=(600, 600),
+    position=(600., 600.),
     angle=-player_angle,
     name="bot",
     color=(0, 255, 0)
@@ -72,9 +70,6 @@ def on_draw():
     window.clear()
     space.debug_draw(options)
     batch.draw()
-
-
-point_count = 0
 
 
 @window.event
@@ -119,8 +114,6 @@ def on_key_release(symbol, modifiers):
 
 
 def update(dt):
-    global point_count
-
     if not player.train.auto:
         player.train.manual_update(*[key_vector[k] for k in ["x", "y", "alpha"]])
     else:
@@ -132,13 +125,16 @@ def update(dt):
 
         data = item.update()
 
-        point_count += len(data['new_touch_points'])
         # отрисуем точки касания
         for touch_point in list(data['new_touch_points']):
             sprites.append(shapes.Circle(touch_point[0], touch_point[1], 3, color=item.train.color, batch=batch))
 
-    if point_count % 100 == 0 and point_count > 0:
-        print(f"point count: {point_count}")
+        for polyline in data["lines"]:
+            for i in range(len(polyline[:-1])):
+                sprites.append(shapes.Line(*polyline[i], *polyline[i+1], 3, color=item.train.color, batch=batch))
+
+        for circle in data["circles"]:
+            sprites.append(shapes.Arc(circle[0][0], circle[0][1], circle[1], color=item.train.color, batch=batch))
 
     space.step(dt)
 

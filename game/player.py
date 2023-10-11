@@ -18,7 +18,6 @@ class UpdatedTrain(Train):
                  ):
         super().__init__(x0, y0, alpha0, v_max, locator)
         self.name = name
-
         self.color = color
         self.auto = False
         self.v = 0
@@ -135,8 +134,12 @@ class Player:
         self.train_body.angle = self.ray_body.angle
         self.train_body.position = self.position
 
-        new_touch_points = self.update_map(info['maps'])
+        new_touch_points = self.update_map(info['maps']['points'])
 
-        data = {"new_touch_points": new_touch_points}
+        data = {
+            "new_touch_points": new_touch_points,
+            "lines": info['maps']['lines'],
+            "circles": info['maps']['circles'],
+        }
 
         return data
