@@ -35,7 +35,7 @@ class Player:
         self.position = position
         self.angle = angle
         self.space = space
-        self.ray_length = 450
+        self.ray_length = 200
         self.blind_zone = 5
         self.collision = None
         self.locator = Locator(self.ray_length, self.blind_zone)
@@ -70,7 +70,7 @@ class Player:
         train_body.angle = ray_body.angle
         train_body.position = ray_body.position
 
-        #train_shape.sensor = True
+        # train_shape.sensor = True
         train_shape.color = (*self.train.color, 255)
         self.train_body = train_body
         self.space.add(self.train_body, train_shape)
@@ -93,13 +93,6 @@ class Player:
     def make_query(self, query: namedtuple):
         if query:
             return self.space.segment_query_first(query.point0, query.point1, 1, pymunk.ShapeFilter())
-
-    def update_map(self, points) -> list[tuple]:
-        current_touch_points = set(points)
-        new_touch_points = list(current_touch_points - self.map)
-        self.map.update(new_touch_points)
-
-        return new_touch_points
 
     def update(self) -> dict[str, list]:
         # запрашиваем локатор
@@ -134,10 +127,8 @@ class Player:
         self.train_body.angle = self.ray_body.angle
         self.train_body.position = self.position
 
-        new_touch_points = self.update_map(info['maps']['points'])
-
         data = {
-            "new_touch_points": new_touch_points,
+            "points": info['maps']['points'],
             "lines": info['maps']['lines'],
             "circles": info['maps']['circles'],
         }

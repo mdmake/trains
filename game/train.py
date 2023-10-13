@@ -56,12 +56,15 @@ class Train:
     def info(self) -> dict:
 
         # TODO!
-        line1 = [(100, 200), (100, 300), (200, 300)]
-        line2 = [(150, 250), (150, 350), (250, 350)]
-        line3 = [(0, 0), (500, 500), (0, 1000)]
-        circle1 = ((100, 200), 20)  # (point, radius)
-        circle2 = ((200, 400), 30)  # (point, radius)
-        circle3 = ((400, 600), 40)  # (point, radius)
+        color1 = (255, 0, 0)
+        color2 = (0, 120, 0)
+        color3 = (255, 0, 150)
+        line1 = [(100, 200,), (100, 300), color1]
+        line2 = [(150, 250), (150, 350), color2]
+        line3 = [(0, 0), (500, 500), color3]
+        circle1 = ((100, 200), 20, color3)  # (point, radius)
+        circle2 = ((200, 400), 30, color3)  # (point, radius)
+        circle3 = ((400, 600), 40, color2)  # (point, radius)
 
         figures = {
             "lines": [line1, line2, line3, ],  # не замкнутая

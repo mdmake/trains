@@ -44,25 +44,26 @@ players.append(player)
 
 key_vector = {"x": 0.0, "y": 0.0, "alpha": 0.0}
 
-bot = Player(
-    space=space,
-    position=(600., 600.),
-    angle=-player_angle,
-    name="bot",
-    color=(0, 255, 0)
-)
 
-players.append(bot)
-
-bot_2 = Player(
-    space=space,
-    position=(700, 200),
-    angle=-player_angle + radians(30),
-    name="bot_2",
-    color=(255, 160, 0)
-)
-
-players.append(bot_2)
+# bot = Player(
+#     space=space,
+#     position=(600., 600.),
+#     angle=-player_angle,
+#     name="bot",
+#     color=(0, 255, 0)
+# )
+#
+# players.append(bot)
+#
+# bot_2 = Player(
+#     space=space,
+#     position=(700, 200),
+#     angle=-player_angle + radians(30),
+#     name="bot_2",
+#     color=(255, 160, 0)
+# )
+#
+# players.append(bot_2)
 
 
 @window.event
@@ -113,6 +114,7 @@ def on_key_release(symbol, modifiers):
             key_vector["alpha"] = 0
 
 
+# object_count
 def update(dt):
     if not player.train.auto:
         player.train.manual_update(*[key_vector[k] for k in ["x", "y", "alpha"]])
@@ -121,20 +123,21 @@ def update(dt):
         key_vector[1] = 0
         key_vector[2] = 0
 
+    sprites.clear()
+
     for item in players:
 
         data = item.update()
 
         # отрисуем точки касания
-        for touch_point in list(data['new_touch_points']):
+        for touch_point in list(data['points']):
             sprites.append(shapes.Circle(touch_point[0], touch_point[1], 3, color=item.train.color, batch=batch))
 
-        for polyline in data["lines"]:
-            for i in range(len(polyline[:-1])):
-                sprites.append(shapes.Line(*polyline[i], *polyline[i+1], 3, color=item.train.color, batch=batch))
+        for line in data["lines"]:
+            sprites.append(shapes.Line(*line[0], *line[1], 3, color=line[2], batch=batch))
 
         for circle in data["circles"]:
-            sprites.append(shapes.Arc(circle[0][0], circle[0][1], circle[1], color=item.train.color, batch=batch))
+            sprites.append(shapes.Arc(circle[0][0], circle[0][1], circle[1], color=circle[2], batch=batch))
 
     space.step(dt)
 
