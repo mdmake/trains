@@ -1,0 +1,28 @@
+description:
+  map_name: "test_field"
+  date: "08.09.23"
+  text: "bla-bla"
+  complete: 100
+
+border:
+  type: 'border'
+  coordinates: [ [ 0, 0 ], [ 1280, 0 ], [ 1280, 840 ], [ 0, 840 ] ]
+
+objects:
+  circle_1:
+    type: 'circle'
+    center: [ 600, 300 ]
+    radius: 40
+
+  circle_2:
+    type: 'circle'
+    center: [ 800, 300 ]
+    radius: 40
+
+  square_1:
+    type: 'rectangle'
+    coordinates: [ [ 100, 100 ], [ 100, 130 ], [ 130, 130 ], [ 130, 100 ] ]
+
+  square_2:
+    type: 'rectangle'
+    coordinates: [ [ 300, 300 ], [ 300, 330 ], [ 330, 330 ], [ 330, 300 ] ]
