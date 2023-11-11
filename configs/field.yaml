@@ -11,18 +11,18 @@ border:
 objects:
   circle_1:
     type: 'circle'
-    center: [ 600, 300 ]
-    radius: 40
+    center: [ 1000, 200 ]
+    radius: 80
 
   circle_2:
     type: 'circle'
-    center: [ 800, 300 ]
-    radius: 40
+    center: [ 200, 500 ]
+    radius: 80
 
   square_1:
     type: 'rectangle'
-    coordinates: [ [ 100, 100 ], [ 100, 130 ], [ 130, 130 ], [ 130, 100 ] ]
+    coordinates: [ [ 100, 100 ], [ 100, 250 ], [ 250, 250 ], [ 250, 100 ] ]
 
   square_2:
     type: 'rectangle'
-    coordinates: [ [ 300, 300 ], [ 300, 330 ], [ 330, 330 ], [ 330, 300 ] ]
+    coordinates: [ [ 800, 500 ], [ 800, 600 ], [ 1050, 600 ], [ 1050, 500 ] ]
