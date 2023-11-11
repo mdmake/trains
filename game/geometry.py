@@ -90,6 +90,7 @@ class Restangle:
         self.points = data
 
     def _contains(self, rectangle_points, point):
+
         point = np.array(point)
         count = rectangle_points.shape[0]
         sign = None

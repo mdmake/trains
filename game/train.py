@@ -1,3 +1,4 @@
+import uuid
 from math import cos, sin, radians
 from random import uniform
 from game.locator import Locator
@@ -5,70 +6,83 @@ from game.locator import Locator
 
 class Train:
 
-    def __init__(self,
-                 x0: float,
-                 y0: float,
-                 alpha0: float,
-                 v_max: float,
-                 locator: Locator,
-                 ):
+    def __init__(self, alpha, position, **arguments):
 
-        self.alpha = alpha0  # строительная ось от оси x против часовой стрелки
-        self.x = x0
-        self.y = y0
+        self.id = uuid.uuid4()
 
-        self.v_max = v_max
-        self.locator = locator
+        self.alpha = alpha  # строительная ось от оси x против часовой стрелки
+        self.position = position
+        self.v = 0
 
-        self.v = 10
-        self.shape = None
-        self.distance = None
-        self.oneturncount = 0
-        self.turn = 1
-        self.points = []
+        self.name = None
+        self.color = None
+
+        self.v_max = arguments['max_speed']
+        self.angle_speed_max = arguments['angle_speed_max']
+        self.shape = arguments['shape']
+        self.center = arguments['center']
+        self.place = arguments['place']
+
+        self.life = arguments['life']
+
         self.auto = True
 
-    def update(self, x: float, y: float):
+        self.locator = None
+        self.laser = None
+        self.gun = None
+        self.rocket = []
 
-        # TODO в будющих версиях боты сами будут счислять свое положение
-        if self.auto:
-            self.x = x
-            self.y = y
+        self.navigator = None
+        self.map = None
+        self.cartographer = None
+        self.trajectory = []
 
-        # дергаем измерение локатора
-        measurement = self.locator.measurement
+        self.touch = False
 
-        if measurement['query']:
-            x_q, y_q, alpha_q = measurement['query'][0]
-            self.distance = measurement['distance']
+        self.points = []
 
-            if self.distance:
-                new_point = (
-                    x_q + self.distance * cos(alpha_q),
-                    y_q + self.distance * sin(alpha_q)
-                )
+    def set_description(self, name=None, color=None):
+        self.name = name
+        self.color = color
 
-                self.points.append(new_point)
+    def update(self):
+
+        self.position = self.navigator.position
+        self.trajectory.append(self.position)
+
+        measurement = self.laser.measurement
+        x, y, alpha = measurement['query']
+
+        if measurement:
+            distance = measurement['distance']
+            l_point = (x + distance * cos(alpha), y + distance * sin(alpha))
+            self.cartographer.append(l_point)
 
         else:
-            self.distance = None
+            distance = self.laser.range
+            l_point = (x + distance * cos(alpha), y + distance * sin(alpha))
+
+        self.points.append(l_point)
+
+        measurements = self.locator.measurement
+        x, y = measurement['query']
+        for measurement, alpha in measurements:
+            if measurement:
+                distance = measurement['distance']
+                lc_point = (x + distance * cos(alpha), y + distance * sin(alpha))
+                self.cartographer.append(lc_point)
+            else:
+                distance = self.locator.range
+                lc_point = (x + distance * cos(alpha), y + distance * sin(alpha))
+
+            self.points.append(lc_point)
 
     def info(self) -> dict:
 
         # TODO!
-        color1 = (255, 0, 0)
-        color2 = (0, 120, 0)
-        color3 = (255, 0, 150)
-        line1 = [(100, 200,), (100, 300), color1]
-        line2 = [(150, 250), (150, 350), color2]
-        line3 = [(0, 0), (500, 500), color3]
-        circle1 = ((100, 200), 20, color3)  # (point, radius)
-        circle2 = ((200, 400), 30, color3)  # (point, radius)
-        circle3 = ((400, 600), 40, color2)  # (point, radius)
-
         figures = {
-            "lines": [line1, line2, line3, ],  # не замкнутая
-            "circles": [circle1, circle2, circle3],
+            "lines": [],  # не замкнутая
+            "circles": [],
             "points": self.points
         }
 
@@ -78,34 +92,4 @@ class Train:
         }
 
     def processing(self):
-        if self.auto:
-            self.processing_auto()
-
-    def manual_update(self, x: float, y: float, alpha: float):
-        if not self.auto:
-            self.x += x
-            self.y += y
-            self.alpha += alpha
-
-        self.locator.make_query(self.x, self.y, self.alpha)
-
-    def processing_auto(self):
-
-        if self.distance:
-
-            if self.distance <= 20:
-                self.alpha = self.alpha + radians(180.0) + uniform(radians(-10.0), radians(10.0))
-
-            elif self.distance < 400:
-                self.alpha += radians(2.0) * self.turn
-                self.oneturncount += 1
-
-            if self.oneturncount > 100 and self.distance > 100:
-                self.alpha = self.alpha + radians(90.0) * self.turn + uniform(radians(-10.0), radians(10.0))
-                self.turn = -self.turn
-                self.oneturncount = 0
-
-        self.x += self.v * cos(self.alpha)
-        self.y += self.v * sin(self.alpha)
-
-        self.locator.make_query(self.x, self.y, self.alpha)
+        pass

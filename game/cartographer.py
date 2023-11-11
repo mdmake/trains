@@ -11,9 +11,11 @@ class Cartographer:
 
         self.border = None
         self.objects = []
+        self.laserpoints = []
+        self.locatorpoints = []
 
         # TODO -- color
-        for object in self.objects:
+        for object in self.map.objects:
             if object['type'] == "circle":
                 self.objects.append(Circle(object['center'], object['radius']))
             elif object['type'] == "rectangle":
@@ -25,7 +27,6 @@ class Cartographer:
         self.border = Border(map.border['coordinates'])
 
     def append(self, point):
-
         if self.is_complete:
             for object in self.objects:
                 if point in object:
@@ -43,6 +44,15 @@ class Cartographer:
                 obj = Undefined(point)
                 self.objects.append(Undefined(point))
                 return obj.id
+
+    # def discovery(self, laserpoints, locatorpoints):
+    #     if len(self.laserpoints) < 2:
+    #         self.laserpoints.append(laserpoints)
+    #
+    #
+    #
+    #
+    #     self.locatorpoints = []
 
     def update(self):
 

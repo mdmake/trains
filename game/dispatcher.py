@@ -23,6 +23,20 @@ class UpdatedTrain(Train):
         self.v = 0
 
 
+class Dispatcher:
+
+    def __init__(self):
+        self.players = []
+
+    def append(self, player=None, player_config=None):
+
+
+        pass
+
+    def step(self):
+        pass
+
+
 class Player:
 
     def __init__(self, *,
@@ -35,7 +49,7 @@ class Player:
         self.position = position
         self.angle = angle
         self.space = space
-        self.ray_length = 200
+        self.ray_length = 100
         self.blind_zone = 5
         self.collision = None
         self.locator = Locator(self.ray_length, self.blind_zone)
@@ -64,16 +78,17 @@ class Player:
         self.ray_body = ray_body
         self.space.add(self.ray_body, ray_shape)
 
-        train_shape = pymunk.Poly(None, ((0.0, 0.0), (-15.0, -50.0), (15.0, -50.0)))
+        self.train_shape = pymunk.Poly(None, ((0.0, 0.0), (-15.0, -50.0), (15.0, -50.0)))
         train_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
-        train_shape.body = train_body
-        train_body.angle = ray_body.angle
-        train_body.position = ray_body.position
+        self.train_shape.body = train_body
+        train_body.angle = self.angle
+        train_body.position = self.position
+        train_body.sensor = False
 
         # train_shape.sensor = True
-        train_shape.color = (*self.train.color, 255)
+        self.train_shape.color = (*self.train.color, 255)
         self.train_body = train_body
-        self.space.add(self.train_body, train_shape)
+        self.space.add(self.train_body, self.train_shape)
 
         end_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
         end_shape = pymunk.Circle(end_body, 5)
@@ -85,24 +100,29 @@ class Player:
         self.space.add(self.end_body, self.end_shape)
 
     def set_touchpoint_visible(self):
-        self.end_shape.color = (255, 0, 0, 255)
+        # self.end_shape.color = (255, 0, 0, 255)
+        pass
 
     def set_touchpoint_invisible(self):
-        self.end_shape.color = (0, 0, 0, 0)
+        # self.end_shape.color = (0, 0, 0, 0)
+        pass
 
-    def make_query(self, query: namedtuple):
+    def make_query(self, query):
+
+        # self._query = LocatorQuery((x, y, alpha), begin_point, end_point)
         if query:
-            return self.space.segment_query_first(query.point0, query.point1, 1, pymunk.ShapeFilter())
+            return self.space.segment_query_first(query[1], query[2], 0.1, pymunk.ShapeFilter())
 
     def update(self) -> dict[str, list]:
         # запрашиваем локатор
         collision = self.make_query(self.locator.query)
 
-        if collision:
-            self.set_touchpoint_visible()
-            self.end_body.position = collision.point
+        if collision and collision.shape is not self.train_shape:
+            # self.set_touchpoint_visible()
+            # self.end_body.position = collision.pointqqq
+            # print(f"{self.locator.query} ==> {collision.point}")
 
-            point0 = self.locator.query.position
+            point0 = self.locator.query[0][0:2]
             point1 = collision.point
 
             distance = sqrt(
@@ -110,8 +130,10 @@ class Player:
                 (point0[1] - point1[1]) ** 2
             )
         else:
+            print(f"{self.locator.query} ==> None")
             self.set_touchpoint_invisible()
             distance = None
+
         self.locator._set_distance(distance)
 
         # запускаем бот
@@ -122,9 +144,7 @@ class Player:
         # меняем позицию на экране
         self.position = info['params'][0], info['params'][1]
         self.angle = info['params'][3]
-        self.ray_body.angle = self.angle - radians(90)
-        self.ray_body.position = self.position
-        self.train_body.angle = self.ray_body.angle
+        self.train_body.angle = self.angle - radians(90)
         self.train_body.position = self.position
 
         data = {

@@ -6,7 +6,7 @@ description:
 
 border:
   type: 'border'
-  coordinates: [ [ 0, 0 ], [ 1280, 0 ], [ 1280, 840 ], [ 0, 840 ] ]
+  coordinates: [ [ 10, 10 ], [ 1270, 10 ], [ 1270, 710 ], [ 10, 710 ] ]
 
 objects:
   circle_1:

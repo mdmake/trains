@@ -2,7 +2,7 @@ from math import sin, cos
 from collections import namedtuple
 from typing import Any
 
-LocatorQuery = namedtuple('LocatorQuery', ['position', 'point0', 'point1'])
+#LocatorQuery = namedtuple('LocatorQuery', ['position', 'point0', 'point1'])
 
 
 class Locator:
@@ -29,7 +29,7 @@ class Locator:
             x + self._blind_zone * cos(alpha),
             y + self._blind_zone * sin(alpha)
         )
-        self._query = LocatorQuery((x, y, alpha), begin_point, end_point)
+        self._query = ((x, y, alpha), begin_point, end_point)
 
     def _set_distance(self, distance):
         """

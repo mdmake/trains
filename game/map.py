@@ -15,10 +15,8 @@ class Map:
     def complete(self):
         return True if self._complete >= 100 else False
 
-
     def set_path(self, path):
         self.path = path
-
 
     def load(self, filename):
         with open(filename, 'r') as f:
@@ -47,8 +45,6 @@ class Map:
                 }
             )
             yaml.dump(data, file)
-
-
 
 
 class Navigator:
