@@ -1,0 +1,29 @@
+train:
+  standard:
+    v_max: 20 # максимальная скорость
+    angle_speed_max: 5 # максимальная угловая скорость
+    life: 100
+    center: [ 0,0 ] # центр масс -- точка вокруг которой наш корабль поворачивает
+    shape: [ [ 0.0, 30.0 ], [ 15.0, 0.0 ], [ 0.0, -30.0 ], [ -15.0, 0.0 ] ]
+    place: [ 0.0, 35.0 ] # точка посадки для локатора и лазера - я вынес ее за пределы паровоза
+
+laser:
+  standard:
+    min_distance: 5
+    max_distance: 60
+    max_angle_speed: 2
+    max_rotation_angle: 90
+
+locator:
+  standard:
+    min_distance: 5
+    max_distance: 40
+    max_angle_speed: 2
+    max_rotation_angle: 90
+    ray_count: 10
+    cone_angle: 60
+
+
+
+
+
