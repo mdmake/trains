@@ -45,9 +45,10 @@ class Train:
         self.name = name
         self.color = color
 
-    def update(self):
 
-        self.position = self.navigator.position
+    def update(self, position, laser):
+
+        self.position = position
         self.trajectory.append(self.position)
 
         measurement = self.laser.measurement
