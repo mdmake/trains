@@ -81,6 +81,7 @@ def on_key_press(symbol, modifiers):
 
     # if not player.train.auto:
     #     if symbol == key.LEFT:
+
     #         key_vector["x"] = -step
     #     if symbol == key.RIGHT:
     #         key_vector["x"] = step

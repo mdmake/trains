@@ -1,0 +1,10 @@
+laser:
+    min_range: 5
+    max_range: 80
+    max_angle_speed: 5 #deg/turn
+    cone_opening_angle: 120 #deg
+    zero: 0
+    fire_power: 100
+    fire_time_limit: 5 #turns
+    max_angle_speed_tracking: 4 #deg/turns
+

@@ -3,6 +3,9 @@ from configs.settings import MIN_MARGIN, EPS, MAX_DISTANCE
 import uuid
 from typing import Optional
 
+from copy import deepcopy
+from typing import List
+
 
 class Geometry:
 
@@ -23,13 +26,13 @@ class Undefined(Geometry):
 
         super().__init__()
 
-        self.points = [point, ]
+        self._points = [point, ]
 
         self.complete = False
 
     def __contains__(self, point):
 
-        distance = np.linalg.norm(np.array(self.points) - point, axis=1).min()
+        distance = np.linalg.norm(np.array(self._points) - point, axis=1).min()
 
         if distance <= MIN_MARGIN:
             return True
@@ -39,11 +42,11 @@ class Undefined(Geometry):
     def append(self, point, condition=True):
 
         if condition:
-            distance = np.linalg.norm(np.array(self.points) - point, axis=1).min()
+            distance = np.linalg.norm(np.array(self._points) - point, axis=1).min()
             if distance > EPS:
-                self.points.append(point)
+                self._points.append(point)
         else:
-            self.points.append(point)
+            self._points.append(point)
 
     def _is_restangle(self) -> Optional['Restangle']:
         return None
@@ -54,12 +57,23 @@ class Undefined(Geometry):
     def _is_border(self) -> Optional['Restangle']:
         return None
 
+    def _is_angle(self):
+        return None
+
     def detected(self):
 
         for method in [self._is_restangle, self._is_circle, self._is_border]:
             result = method()
             if result:
                 return result
+
+    @property
+    def points(self):
+        return deepcopy(self._points)
+
+
+class Angle(Geometry):
+    pass
 
 
 class Restangle:
@@ -146,3 +160,6 @@ if __name__ == '__main__':
     data = np.array([[-5, 5], [4, -3], [6, 2], [-5, -2.5]]) - [[0, 0]]
     list_data = data.tolist()
     rest = Restangle(list_data)
+
+
+

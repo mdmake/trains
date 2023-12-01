@@ -16,11 +16,4 @@ laser:
     max_rotation_angle: 90 #deg
     damage: 1
 
-locator:
-  standard:
-    min_distance: 5
-    max_distance: 40
-    max_angle_speed: 2 #deg/sec
-    max_rotation_angle: 90 #deg
-    ray_count: 11
-    cone_angle: 60
+
