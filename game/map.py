@@ -1,7 +1,7 @@
 import yaml
 import datetime
 import os
-from game.geometry import Point, Circle, Rectangle, Border
+from geometry.geometry import Point, Circle, Rectangle, Border
 
 
 class Map:

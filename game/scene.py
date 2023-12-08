@@ -12,8 +12,15 @@ class Scene:
         self.space = space
         with open(filename, 'r') as f:
             data = yaml.safe_load(f)
+
+            for k in data['circles'].keys():
+                data['circles'][k]['type'] = "circle"
+            for k in data['rectangles'].keys():
+                data['rectangles'][k]['type'] = "rectangle"
+
             self.border = data['border']
-            self.objects = data['objects']
+            self.objects = data['circles']
+            self.objects.update(data['rectangles'])
             self.description = data['description']
             self._complete = self.description['complete']
 
