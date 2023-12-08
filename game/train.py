@@ -1,8 +1,8 @@
 import uuid
 from math import cos, sin, radians
 from random import uniform
-from game.locator import Locator
-from game.interfaces import LocatorInterface, LaserInterface
+from .locator import Locator
+from .interfaces import LocatorInterface, LaserInterface
 
 
 class Train:
@@ -25,6 +25,8 @@ class Train:
         self.ready = False
         self.laser_config = None
         self.locator_config = None
+        self.name = None
+        self.color = None
 
     def set_description(self, name=None, color=None):
         self.name = name
@@ -52,4 +54,3 @@ class Train:
             pass
         else:
             pass
-

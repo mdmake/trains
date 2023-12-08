@@ -29,8 +29,6 @@ class Dispatcher:
         self.players = []
 
     def append(self, player=None, player_config=None):
-
-
         pass
 
     def step(self):
