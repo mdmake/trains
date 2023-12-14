@@ -1,7 +1,10 @@
 import yaml
 import datetime
 import os
-from geometry.geometry import Point, Circle, Rectangle, Border
+from game.geometry import Point, Circle, Rectangle, Border
+
+DEFAULT_NAME = 'FlyingLocomotivesMap'
+DEFAULT_TEXT = 'This map for FlyingLocomotivesGame!'
 
 
 class Map:
@@ -21,7 +24,9 @@ class Map:
         self.__circles = dict()
         self.__rectangles = dict()
         self.__border = dict()
-        self.__path = path or self.set_default_path()
+        self.__path = None
+
+        self.set_path(path)
 
     @property
     def is_complete(self) -> bool:
@@ -81,24 +86,46 @@ class Map:
 
         return self.__path
 
-    @staticmethod
-    def set_default_path() -> str:
+    def set_path(self, relative_path: str | None) -> None:
+        """
+        Установка пути к файлу.
+
+        :param relative_path: Переданный путь.
+        :return: None.
+        """
+
+        if relative_path:
+            self.__path = relative_path
+        else:
+            self.set_default_path()
+
+        if not self.__path.endswith('.yaml'):
+            self.__path += '.yaml'
+
+        if os.path.exists(self.__path):
+            self.load()
+            print(self.__description['date'])
+            self.save()
+        else:
+            self.save()
+
+    def set_default_path(self) -> None:
         """
         Установка дефолтного пути к файлу с картой.
 
         :return: Дефолтный путь к новоиспеченному файлу.
         """
 
-        base = 'FlyingLocomotivesMap'
         counter = 0
 
         while True:
-            current_name = f'{base}{counter}.yaml' if counter > 0 else f'{base}.yaml'
+            name = f'{DEFAULT_NAME}{counter}.yaml' if counter > 0 else f'{DEFAULT_NAME}.yaml'
 
-            if os.path.exists(current_name):
+            if os.path.exists(name):
                 counter += 1
             else:
-                return current_name
+                self.__path = name
+                break
 
     @staticmethod
     def represent_list(dumper, data):
@@ -112,41 +139,46 @@ class Map:
 
     def load(self, path: str | None = None) -> None:
         """
-        Чтение карты из файла (формат .yaml).
+        Чтение карты из файла .yaml.
 
         :param path: Путь к файлу.
         :return: None.
         """
 
-        with open(path or self.__path or self.set_default_path(), 'r', encoding='utf-8') as file:
+        with open(path or self.__path, 'r', encoding='utf-8') as file:
             data = yaml.safe_load(file)
+            date_time = datetime.datetime.today().strftime("%H:%M:%S %d.%m.%Y")
 
-            if 'description' not in data.keys():
+            if not data:
                 self.__description = {
                     'map_name': 'DEFAULT_NAME',
-                    'date': datetime.datetime.today().strftime("%H:%M:%S %d.%m.%Y"),
-                    'text': 'DEFAULT_TEXT',
+                    'date': date_time,
+                    'text': DEFAULT_TEXT,
                     'complete': 0
                 }
+                self.__complete = 0
+                self.__border = dict()
+                self.__circles = dict()
+                self.__rectangles = dict()
             else:
-                self.__description = data['description']
+                if not data.get('description', None):
+                    self.__description = {
+                        'map_name': DEFAULT_NAME,
+                        'date': date_time,
+                        'text': DEFAULT_TEXT,
+                        'complete': 0
+                    }
+                else:
+                    self.__description['map_name'] = data['description'].get('map_name', DEFAULT_NAME)
+                    self.__description['date'] = data['description'].get('date', date_time)
+                    self.__description['text'] = data['description'].get('text', DEFAULT_TEXT)
+                    self.__description['complete'] = data['description'].get('complete', 0)
 
-            self.__complete = self.__description['complete']
+                self.__complete = self.__description['complete']
 
-            if 'border' not in data.keys():
-                self.__border = []
-            else:
-                self.__border = data['border']
-
-            if 'circles' not in data.keys():
-                self.__circles = data['circles']
-            else:
-                self.__circles = data['circles']
-
-            if 'rectangles' not in data.keys():
-                self.__rectangles = []
-            else:
-                self.__rectangles = data['rectangles']
+                self.__border = data.get('border', dict())
+                self.__circles = data.get('circles', dict())
+                self.__rectangles = data.get('rectangles', dict())
 
     def save(self, path: str | None = None, map_name: str | None = None, text: str | None = None) -> None:
         """
@@ -158,9 +190,12 @@ class Map:
         :return: None.
         """
 
-        self.__description['date'] = datetime.datetime.today().strftime("%H:%M:%S %d.%m.%Y")
-        self.__description['map_name'] = map_name or self.__description.get('map_name', 'Default')
-        self.__description['text'] = text or self.__description.get('text', 'Default')
+        date_time = datetime.datetime.today().strftime("%H:%M:%S %d.%m.%Y")
+
+        self.__description['date'] = self.__description.get('date', date_time)
+        self.__description['map_name'] = map_name or self.__description.get('map_name', DEFAULT_NAME)
+        self.__description['text'] = text or self.__description.get('text', DEFAULT_TEXT)
+        self.__description['complete'] = self.__complete
 
         with open(path or self.__path, 'w', encoding='utf-8') as file:
             data = dict(
@@ -235,9 +270,3 @@ class Map:
             }
 
         return True
-
-
-if __name__ == '__main__':
-    mapp = Map('field_1.yaml')
-    mapp.load()
-    print(mapp.rectangles)
