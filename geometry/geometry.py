@@ -2,31 +2,15 @@ import math
 import numpy as np
 import sympy
 
+TOLERANCE = 3
 
 class Geometry:
-    def __init__(self, color: tuple[int, int, int] = (0, 0, 0), object_type: str | None = None):
+    def __init__(self, color: tuple[int, int, int] = (0, 0, 0), object_type: str | None = None, **kwargs):
         self.__color = color
         self.__square = 0
+        # TODO
         self.__object_type = object_type
 
-    @property
-    def color(self) -> tuple[int, int, int]:
-        """
-        Получение цвета в RGB палитре.
-
-        :return: tuple[0-255, 0-255, 0-255].
-        """
-        return self.__color
-
-    @color.setter
-    def color(self, value: tuple[int, int, int]) -> None:
-        """
-        Установка цвета в RGB палитре.
-
-        :param value: tuple[0-255, 0-255, 0-255].
-        :return: None.
-        """
-        self.__color = value
 
     @property
     def object_type(self) -> str | None:
@@ -36,7 +20,13 @@ class Geometry:
         pass
 
     def square(self):
-        pass
+        raise NotImplementedError
+
+    def __str__(self):
+        raise NotImplementedError
+
+    def __repr__(self):
+        raise NotImplementedError
 
 
 class Point(Geometry):
@@ -48,8 +38,7 @@ class Point(Geometry):
         super().__init__(color=color, object_type='point')
         self.__x = x
         self.__y = y
-        self.__point = (x, y)
-        self.__neighbors = []
+        # self.__neighbors = []
 
     def __eq__(self, other: 'Point') -> bool:
         """
@@ -59,10 +48,17 @@ class Point(Geometry):
         :return: True, если расстояние между точками меньше некоторого значения, иначе - False.
         """
 
-        return True if self.distance(other) < 3 else False
+        return True if self.distance(other) < TOLERANCE else False
+
+    def almost_eq(self, other: 'Point', tol=TOLERANCE):
+        pass
 
     def __hash__(self):
         return hash(self.__point)
+
+    # line + point = line
+    # line - point = line
+    # point +point = line
 
     def __add__(self, other: 'Point') -> 'Line':
         """
@@ -100,15 +96,7 @@ class Point(Geometry):
 
         :return: Кортеж координат -> (координата X, координата Y).
         """
-        return self.__point
-
-    @property
-    def neighbors(self) -> list['Point']:
-        """
-        Получение соседей.
-        """
-
-        return self.__neighbors
+        return self.__x, self.__y
 
 
     def distance(self, other: 'Point') -> float:
@@ -119,26 +107,11 @@ class Point(Geometry):
         :return: Расстояние между точками.
         """
 
-        return pow(pow(other.x - self.__x, 2) + pow(other.y - self.__y, 2), .5)
+        return math.sqrt((other.x - self.__x) ** 2 + (other.y - self.__y) ** 2)
 
-    def distance_to_line(self, line: 'Line') -> float:
-        """
-        Получение расстояния от точки до прямой.
-
-        :param line: Прямая, до которой высчитывается расстояние
-        :return: Расстояние до прямой.
-        """
-
-        equation = line.line_equation
-
-        if 'x' in equation.keys():
-            return math.fabs(equation['x'] - self.__x)
-        elif 'y' in equation.keys():
-            return math.fabs(equation['y'] - self.__y)
-        return (math.fabs(equation['k'] * self.__x + (-1) * self.__y + equation['b']) /
-                math.sqrt(pow(equation['k'], 2) + pow(equation['b'], 2)))
-
-    def is_exist(self, points: list['Point']) -> bool:
+    # def __contains__(self, item): для линии
+    # TODO ????
+    def is_in_list(self, points: list['Point']) -> bool:
         """
         Проверка наличия точки в списке точек.
 
@@ -147,26 +120,14 @@ class Point(Geometry):
         """
 
         for other in points:
-            if self.distance(other) < 3:
+            # TODO
+            # if self.distance(other) < 3:
+            # TODO
+            # if self.distance(other) < TOLERANCE:
+            if self == other:
                 return True
 
         return False
-
-    def is_on_line(self, line: 'Line') -> bool:
-        """
-        Проверка нахождения точки на прямой линии с некоторой погрешностью.
-
-        :param line: Прямая (объект класса Line).
-        :return: True, если точка лежит на прямой, иначе - False.
-        """
-
-        equation = line.line_equation
-        if 'k' in equation.keys():
-            return True if math.fabs(equation['k'] * self.__x + equation['b'] - self.__y) < 3 else False
-        if 'x' in equation.keys():
-            return True if math.fabs(equation['x'] - self.__x) < 2 else False
-        if 'y' in equation.keys():
-            return True if math.fabs(equation['y'] - self.__y) < 2 else False
 
 
 class Line(Geometry):
@@ -179,39 +140,23 @@ class Line(Geometry):
         self.__start = start
         self.__end = end
 
-        self.__line = (self.__start, self.__end)
-
-        self.__median_point = self.median_point_calculations
-        self.__line_equation = self.line_equation_calculations
-        self.__median_perpendicular_equation = self.median_perpendicular_equation_calculations
-
         self.get_sorted_points()
 
+    @property
+    def line(self):
+        return self.__start, self.__end
+
     def __eq__(self, other: 'Line'):
-        return self.__start == other.start and self.__end == other.end
+        return self.line == other.line
 
-    def get_sorted_points(self):
-        change_it = False
-
-        if 'x' in self.__line_equation.keys():
-            if self.__start.y > self.__end.y:
-                change_it = True
-        elif 'y' in self.__line_equation.keys():
-            if self.__start.x > self.__end.x:
-                change_it = True
-        else:
-            if self.__start.x > self.__end.x:
-                change_it = True
-
-        if change_it:
-            self.__start, self.__end = self.__end, self.__start
-            self.__line = (self.__start, self.__end)
 
     def is_it_possible_to_merge_the_lines(self, other: 'Line'):
-        if 'x' in self.__line_equation.keys() and 'x' in self.line_equation.keys():
+        # TODO -- ahtung!!!
+        # угол ---
+        if 'x' in self.line_equation.keys() and 'x' in self.line_equation.keys():
             if self.__start.y <= other.start.y <= self.__end.y or self.__start.y <= other.end.y <= self.__end.y:
                 return True
-        elif 'y' in self.__line_equation.keys() and 'y' in self.line_equation.keys():
+        elif 'y' in self.line_equation.keys() and 'y' in self.line_equation.keys():
             if self.__start.x <= other.start.x <= self.__end.x or self.__start.x <= other.end.x <= self.__end.x:
                 return True
         else:
@@ -223,7 +168,7 @@ class Line(Geometry):
         if self.are_equations_the_same(other=other):
             if self.is_it_possible_to_merge_the_lines(other=other):
                 return self.get_new_line(other=other)
-        return
+
 
     def __str__(self):
         """
@@ -260,29 +205,6 @@ class Line(Geometry):
                f'Уравнение прямой --> {result[1]["equation"]}\n' \
                f'Уравнение срединного перпендикуляра к прямой --> {result[2]["equation"]}'
 
-    @property
-    def start(self) -> Point:
-        """
-        Возвращает кортеж координат первой точки отрезка (координата X, координата Y).
-        """
-
-        return self.__start
-
-    @property
-    def end(self) -> Point:
-        """
-        Возвращает кортеж координат второй точки отрезка (координата X, координата Y).
-        """
-
-        return self.__end
-
-    @property
-    def line(self) -> tuple[Point, Point]:
-        """
-        Возвращает кортеж двух точек (start, end), где точки также являются кортежами координат.
-        """
-
-        return self.__line
 
     @property
     def median_point(self) -> Point:
@@ -290,7 +212,7 @@ class Line(Geometry):
         Возвращает кортеж координат середины отрезка (координата X, координата Y).
         """
 
-        return self.__median_point
+        return Point((self.__start.x + self.__end.x) / 2, (self.__start.y + self.__end.y) / 2)
 
     @property
     def line_equation(self):
@@ -306,19 +228,19 @@ class Line(Geometry):
         Возвращает уравнение срединного перпендикуляра к прямой.
         """
 
-        return self.__median_perpendicular_equation
+        if 'x' in self.__line_equation.keys():
+            return {'y': self.__median_point.y}
+        elif 'y' in self.__line_equation.keys():
+            return {'x': self.__median_point.x}
+        else:
+            k = - 1 / self.__line_equation['k']
+            b = (self.__median_point.x / self.__line_equation['k']) + self.__median_point.y
+
+            return {'k': k, 'b': b}
+
 
     @property
-    def median_point_calculations(self) -> Point:
-        """
-        Вычисление координат середины отрезка.
-
-        :return: Объект класса Point - середина отрезка.
-        """
-        return Point((self.__start.x + self.__end.x) / 2, (self.__start.y + self.__end.y) / 2)
-
-    @property
-    def line_equation_calculations(self) -> dict:
+    def line_equation(self) -> dict:
         """
         Вычисление коэффициентов прямой.
 
@@ -334,90 +256,8 @@ class Line(Geometry):
         else:
             return {'k': math.tan(artan), 'b': self.__start.y - math.tan(artan) * self.__start.x}
 
-    @property
-    def median_perpendicular_equation_calculations(self) -> dict:
-        """
-        Вычисление коэффициентов срединного перпендикуляра к прямой.
 
-        :return: Коэффициенты срединного перпендикуляра k и b или уравнение вида x=Const/y=Const.
-        """
-
-        if 'x' in self.__line_equation.keys():
-            return {'y': self.__median_point.y}
-        elif 'y' in self.__line_equation.keys():
-            return {'x': self.__median_point.x}
-        else:
-            k = - 1 / self.__line_equation['k']
-            b = (self.__median_point.x / self.__line_equation['k']) + self.__median_point.y
-
-            return {'k': k, 'b': b}
-
-    def is_intersected_rectangles(self, rectangles: list['Rectangle']) -> bool:
-        """
-        Проверка пересечения прямой с прямоугольниками
-        :param rectangles:
-        :return:
-        """
-        for rectangle in rectangles:
-            # if self.__start in rectangle:
-            #     return True
-            #
-            # if self.__end in rectangle:
-            #     return True
-
-            for side in rectangle.sides:
-                current_line = sympy.Line(sympy.Point(*self.__start.point), sympy.Point(*self.__end.point))
-                other_line = sympy.Line(sympy.Point(*side.start.point), sympy.Point(*side.end.point))
-
-                intersection = current_line.intersection(other_line)
-
-                if intersection:
-                    point = Point(float(intersection.x), float(intersection.y))
-
-                    if (min(self.__start.x, self.__end.x) < point.x < max(self.__start.x, self.__end.x) and
-                            min(self.__start.y, self.__end.y) < point.y < max(self.__start.y, self.__end.y)):
-                        return True
-
-                    # if intersection in rectangle:
-                    #     return True
-
-        return False
-
-    def is_intersected_circles(self, circles: list['Circle'], dont_touch) -> bool:
-        for circle in circles:
-            if circle.center in dont_touch:
-                continue
-
-            current_line = sympy.Line(sympy.Point(*self.__start.point), sympy.Point(*self.__end.point))
-            current_circle = sympy.Circle(sympy.Point(*circle.center.point), circle.radius)
-
-            intersection = current_line.intersection(current_circle)
-
-            if intersection:
-                if len(intersection) == 1:
-                    pass
-
-                if len(intersection) == 2:
-                    point1 = Point(float(intersection[0][0]), float(intersection[0][1]))
-                    point2 = Point(float(intersection[1][0]), float(intersection[1][1]))
-
-                    # if ((self.__start.x < point1.x < self.__end.x and
-                    #      self.__start.y < point1.y < self.__end.y) or
-                    #     (self.__start.x < point2.x < self.__end.x and
-                    #      self.__start.y < point2.y < self.__end.y)):
-                    #     return True
-
-                    if ((min(self.__start.x, self.__end.x) < point1.x < max(self.__start.x, self.__end.x) and
-                         min(self.__start.y, self.__end.y) < point1.y < max(self.__start.y, self.__end.y)) or
-                        (min(self.__start.x, self.__end.x) < point2.x < max(self.__start.x, self.__end.x) and
-                         min(self.__start.y, self.__end.y) < point2.y < max(self.__start.y, self.__end.y))):
-                        return True
-            #
-            # if circle.center.distance_to_line(self) < circle.radius + 1:
-            #     return True
-
-        return False
-
+    # TODO
     def get_intersection(self, other: 'Line', median_perpendicular=False) -> Point | None:
         """
         Определение точки пересечения двух прямых.
@@ -426,48 +266,17 @@ class Line(Geometry):
         :param median_perpendicular: Флаг, определяющий уравнение самой прямой или ее срединного перпендикуляра.
         :return: Точка пересечения (), в противном случае -> None.
         """
-
-        if median_perpendicular:
-            equation1 = self.__median_perpendicular_equation
-            equation2 = other.__median_perpendicular_equation
-        else:
-            equation1 = self.__line_equation
-            equation2 = other.__line_equation
-
-        if 'x' in equation1.keys() and 'x' in equation2.keys():
-            return
-        if 'y' in equation1.keys() and 'y' in equation2.keys():
-            return
-
-        if 'x' in equation1.keys() and 'y' in equation2.keys():
-            x_result = equation1['x']
-            y_result = equation2['y']
-        elif 'y' in equation1.keys() and 'x' in equation2.keys():
-            x_result = equation2['x']
-            y_result = equation1['y']
-        elif 'x' in equation1.keys():
-            x_result = equation1['x']
-            y_result = equation2['k'] * x_result + equation2['b']
-        elif 'y' in equation1.keys():
-            y_result = equation1['y']
-            x_result = (y_result - equation2['k']) / equation2['b']
-        elif 'x' in equation2.keys():
-            x_result = equation2['x']
-            y_result = equation1['k'] * x_result + equation1['b']
-        elif 'y' in equation2.keys():
-            y_result = equation2['y']
-            x_result = (y_result - equation1['k']) / equation1['b']
-        else:
-            x_result = (equation1['b'] - equation2['b']) / (equation2['k'] - equation1['k'])
-            y_result = equation1['k'] * x_result + equation1['b']
+        # TODO
 
         return Point(x_result, y_result) if x_result and y_result else None
 
+    # TODO ANG_TOL = 0.1
     def is_perpendicular(self, other: 'Line') -> bool:
-        if (math.pi / 2) - 0.1 < self.angle_between_lines(other) < (math.pi / 2) + 0.1:
-            return True
-        return False
+        return (math.pi / 2) - 0.1 < self.angle_between_lines(other) < (math.pi / 2) + 0.1
 
+    # TODO -- plus , minus, other  -- может __add__, __sub__, по другому реализовать?
+    # TODO pow
+    # угол между линиями
     def angle_between_lines(self, other: 'Line'):
         vec1 = (self.__end.x - self.__start.x, self.__end.y - self.__start.y)
         vec2 = (other.end.x - other.start.x, other.end.y - other.start.y)
@@ -475,10 +284,12 @@ class Line(Geometry):
         numerator = vec1[0] * vec2[0] + vec1[1] * vec2[1]
         denominator = pow(pow(vec1[0], 2) + pow(vec1[1], 2), 0.5) * pow(pow(vec2[0], 2) + pow(vec2[1], 2), 0.5)
 
-        try:
-            return math.fabs(math.acos(numerator / denominator))
-        except:
-            print(f'прямая {self.__line[0].point, self.__line[1].point} и {other.line[0].point, other.line[1].point}')
+        # TODO
+        # try:
+        #     return math.fabs(math.acos(numerator / denominator))
+        # except ZeroDivisionError:
+        #     raise
+        #     print(f'прямая {self.__line[0].point, self.__line[1].point} и {other.line[0].point, other.line[1].point}')
 
         # ЭТОТ СПОСОБ ПОЧЕМУ ТО НЕ РАБОТАЕТ:
         # slope1 = math.tan(math.atan2(self.__end.y - self.__start.y, self.__end.y - self.__start.y))
@@ -486,28 +297,31 @@ class Line(Geometry):
         #
         # return math.atan2(abs(slope2 - slope1), abs(1 + slope1 * slope2))
 
-
-
+    # TODO лежат ли точки одной прямой на другой прямой
+    # TODO Fix
     def are_equations_the_same(self, other: 'Line') -> bool:
         """
         Проверка, что уравнения двух прямых совпадают (с погрешностью).
+        [(])
 
+        {} []
         :param other: Объект второй прямой.
         :return: True, если уравнения совпадают, False - в противном случае.
         """
-        if 'k' in self.__line_equation.keys() and 'k' in other.line_equation.keys():
-            if math.fabs(self.__line_equation['k'] - other.line_equation['k']) < 3 and \
-                    math.fabs(self.__line_equation['b'] - other.line_equation['b']) < 50:
+        if 'k' in self.line_equation.keys() and 'k' in other.line_equation.keys():
+            if math.fabs(self.line_equation['k'] - other.line_equation['k']) < 3 and \
+                    math.fabs(self.line_equation['b'] - other.line_equation['b']) < 50:
                 return True
-        elif 'x' in self.__line_equation.keys() and 'x' in other.line_equation.keys():
-            if math.fabs(self.__line_equation['x'] - other.line_equation['x']) < 3:
+        elif 'x' in self.line_equation.keys() and 'x' in other.line_equation.keys():
+            if math.fabs(self.line_equation['x'] - other.line_equation['x']) < 3:
                 return True
-        elif 'y' in self.__line_equation.keys() and 'y' in other.line_equation.keys():
-            if math.fabs(self.__line_equation['y'] - other.line_equation['y']) < 3:
+        elif 'y' in self.line_equation.keys() and 'y' in other.line_equation.keys():
+            if math.fabs(self.line_equation['y'] - other.line_equation['y']) < 3:
                 return True
 
         return False
 
+    # TODO нейминг, если она вспомогательная -- __
     def get_points_of_new_line(self, other: 'Line', mode: int, is_the_slope_positive=False):
         """
         Получение точек новой прямой.
@@ -546,20 +360,22 @@ class Line(Geometry):
 
         return line
 
+    # TODO ну камон - 2:
     def get_new_line(self, other: 'Line'):
         mode = -1
 
-        if 'k' in self.__line_equation.keys() and 'k' in other.line_equation.keys():
+        if 'k' in self.line_equation.keys() and 'k' in other.line_equation.keys():
             mode = 0
-            is_positive = True if self.__line_equation['k'] > 0 else False
+            is_positive = True if self.line_equation['k'] > 0 else False
             return self.get_points_of_new_line(other, mode, is_positive) if mode != -1 else None
-        elif 'x' in self.__line_equation.keys() and 'x' in other.line_equation.keys():
+        elif 'x' in self.line_equation.keys() and 'x' in other.line_equation.keys():
             mode = 1
-        elif 'y' in self.__line_equation.keys() and 'y' in other.line_equation.keys():
+        elif 'y' in self.line_equation.keys() and 'y' in other.line_equation.keys():
             mode = 2
 
         return self.get_points_of_new_line(other, mode) if mode != -1 else None
 
+    # TODO на угол поменяйте!!!
     def is_oppositely_directed(self, other: 'Line'):
         vec1 = (self.__start.x - self.__end.x, self.__start.y - self.__end.y)
         vec2 = (other.start.x - other.end.x, other.start.y - other.end.y)
@@ -575,18 +391,21 @@ class StraightAngle(Geometry):
     def __init__(self, line1: Line, intersection: Point, line2: Line, color: tuple[int, int, int] = (0, 255, 0)):
         self.__first_line = line1
         self.__second_line = line2
+
         self.__intersection_point = intersection
         self.__straight_angle = (line1, intersection, line2)
-        self.__neighbours = []
+        # self.__neighbours = []
 
         self._is_convex = None
 
         super().__init__(color=color, object_type='angle')
         self.set_color(color)
 
+    # TODO --
     def __hash__(self):
         return hash(self.__straight_angle[1])
 
+    # TODO так все углы равны
     def __eq__(self, other: 'StraightAngle'):
         return self.__straight_angle[1] == other.angle[1]
 
@@ -594,6 +413,8 @@ class StraightAngle(Geometry):
         self.__first_line.color = value
         self.__second_line.color = value
 
+
+    # TODO
     @property
     def first_line(self) -> Line:
         return self.__first_line
@@ -617,19 +438,6 @@ class StraightAngle(Geometry):
         :return:
         """
         return self._is_convex
-
-    def is_exist(self, straight_angles: list['StraightAngle']) -> bool:
-        """
-        Проверка существования прямого ула в списке прямых углов.
-
-        :param straight_angles: Список прямых углов.
-        :return: True, если угол существует, иначе - False.
-        """
-        for angle in straight_angles:
-            if self.__straight_angle[1].distance(angle.angle[1]) < 1:
-                return True
-
-        return False
 
     def convex_or_concave_angle(self, train_position: Point):
         """
@@ -665,6 +473,7 @@ class Circle(Geometry):
     """
 
     def __init__(self, center: Point, radius: float, color: tuple[int, int, int] = (0, 0, 0)):
+        # TODO
         self.__circle = (center, radius)
         self.__center = center
         self.__radius = radius
@@ -676,6 +485,7 @@ class Circle(Geometry):
         self.set_color(color)
         # print(f'Площадь окружности: {self.__square}')
 
+    # TODO TOL
     def __contains__(self, point: Point):
         """
         Проверка точки на ее принадлежность окружности.
@@ -684,13 +494,13 @@ class Circle(Geometry):
         :return: True, если точка лежит в/на окружности, иначе - False.
         """
 
-        if self.__center.distance(point) < self.__radius + 1:
-            return True
-        return False
+        return self.__center.distance(point) < self.__radius + 1
 
-    def __hash__(self):
-        return hash(self.__center)
+    # TODO -- ну это не отвали откровенно
+    # def __hash__(self):
+    #     return hash(self.__center, self.__radius)
 
+    # TODO почему теперь один?
     def __eq__(self, other: 'Circle'):
         """
         Проверка эквивалентности окружностей.
@@ -699,9 +509,7 @@ class Circle(Geometry):
         :return: True, если окружности эквивалентны, иначе - False.
         """
 
-        if self.__center.distance(other.center) < 1:
-            return True
-        return False
+        return self.__center.distance(other.center) < 1 and abs(self.__radius - other.__radius) < TOLERANCE
 
     def set_color(self, color: tuple[int, int, int]):
         """
@@ -713,12 +521,17 @@ class Circle(Geometry):
 
         self.center.color = color
 
-    def calculating_the_square(self):
-        """
-        Вычисление площади круга.
-        """
+    @property
+    def square(self):
+        return math.pi * self.__radius ** 2
 
-        self.__square = math.pi * self.__radius ** 2
+
+    # def calculating_the_square(self):
+    #     """
+    #     Вычисление площади круга.
+    #     """
+    #
+    #     self.__square = math.pi * self.__radius ** 2
 
     @property
     def points_on_it(self) -> list[Point]:
@@ -759,23 +572,25 @@ class Circle(Geometry):
 
         return self.__radius
 
-    def is_exist(self, circles: list['Circle']) -> bool:
-        """
-        Проверка на существование окружности в списке окружностей.
-
-        :param circles: Рассматриваемая окружность.
-        :return: True, если окружность существует, иначе - False.
-        """
-
-        for circle in circles:
-            other = Circle(center=Point(circle.center.x, circle.center.y), radius=circle.radius)
-            if self.center.distance(other.__center) < other.radius:
-                return True
-
-        return False
+    # def is_exist(self, circles: list['Circle']) -> bool:
+    #     """
+    #     Проверка на существование окружности в списке окружностей.
+    #
+    #     :param circles: Рассматриваемая окружность.
+    #     :return: True, если окружность существует, иначе - False.
+    #     """
+    #
+    #     for circle in circles:
+    #         other = Circle(center=Point(circle.center.x, circle.center.y), radius=circle.radius)
+    #         if self.center.distance(other.__center) < other.radius:
+    #             return True
+    #
+    #     return False
 
 
 class Rectangle(Geometry):
+
+    # TODO
     def __init__(self, rectangle: list[Point], color=(0, 0, 0), object_type: str = 'rectangle'):
         self.__rectangle: list[Point] = rectangle
         self.__center: Point | None = None
@@ -790,6 +605,7 @@ class Rectangle(Geometry):
         self.sorting_vertices()
         self.calculating_the_square()
 
+        # TODO
         # for top in self.__rectangle:
         #     print(top.point, end=', ')
         #
@@ -798,6 +614,7 @@ class Rectangle(Geometry):
         # else:
         #     print(f'Площадь прямоугольника: {self.__square}')
 
+    # TODO лежит внутри или на границе?
     def __contains__(self, point: Point):
         """
         Проверка точки на ее принадлежность прямоугольнику.
@@ -842,6 +659,7 @@ class Rectangle(Geometry):
     ###############
     # ДЛЯ ОТЛАДКИ #
     ###############
+    # TODO
     @property
     def larger_rectangle_points(self):
         return self.__larger_rectangle_points
@@ -900,6 +718,7 @@ class Rectangle(Geometry):
         :return: None.
         """
 
+        # TODO O(n2)
         for i in range(len(self.__rectangle)):
             for j in range(len(self.__rectangle)):
 
@@ -912,7 +731,6 @@ class Rectangle(Geometry):
                     self.__rectangle[j].y - self.__center.y,
                     self.__rectangle[j].x - self.__center.x
                 )
-
                 if artan1 < artan2:
                     self.__rectangle[i], self.__rectangle[j] = self.__rectangle[j], self.__rectangle[i]
 
@@ -933,9 +751,11 @@ class Rectangle(Geometry):
         :param epsilon: Величина, на которую новый прямоугольник будет больше этого.
         :return: None.
         """
+        # TODO point, corner
         for top in self.__rectangle:
-            x = top.x
-            y = top.y
+            x, y = top.x, top.y
+            # x = top.x
+            # y = top.y
 
             dx = x - self.__center.x
             dy = y - self.__center.y
