@@ -1,0 +1,21 @@
+description:
+  map_name: "test_field_2"
+  date: "13.12.23"
+  text: "circle - rectangle - circle"
+  complete: 100
+
+border:
+  type: 'border'
+  coordinates: [ [ 10, 10 ], [ 1270, 10 ], [ 1270, 710 ], [ 10, 710 ] ]
+
+circles:
+  circle_1:
+    center: [200, 400]
+    radius: 120
+  circle_2:
+    center: [1000, 310]
+    radius: 110
+
+rectangles:
+  square_1:
+    coordinates: [[540.0, 110.0], [540.0, 610.0], [740.0, 610.0], [740.0, 110.0]]

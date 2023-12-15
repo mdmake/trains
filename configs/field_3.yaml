@@ -1,0 +1,32 @@
+description:
+  map_name: "test_field_3"
+  date: "13.12.23"
+  text: "five circles - two rectangles"
+  complete: 100
+
+border:
+  type: 'border'
+  coordinates: [ [ 10, 10 ], [ 1270, 10 ], [ 1270, 710 ], [ 10, 710 ] ]
+
+circles:
+  circle_1:
+    center: [200, 123]
+    radius: 50
+  circle_2:
+    center: [200, 560]
+    radius: 60
+  circle_3:
+    center: [640, 360]
+    radius: 80
+  circle_4:
+    center: [1000, 120]
+    radius: 70
+  circle_5:
+    center: [1000, 570]
+    radius: 80
+
+rectangles:
+  square_1:
+    coordinates: [[180.0, 310.0], [180.0, 410.0], [460.0, 410.0], [460.0, 310.0]]
+  square_2:
+    coordinates: [[900.0, 320.0], [900.0, 400.0], [1160.0, 400.0], [1160.0, 320.0]]

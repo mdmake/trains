@@ -1,0 +1,42 @@
+description:
+  map_name: "test_field_5"
+  date: "14.12.23"
+  text: "many circles and one rectangle"
+  complete: 100
+
+border:
+  type: 'border'
+  coordinates: [ [ 10, 10 ], [ 1270, 10 ], [ 1270, 710 ], [ 10, 710 ] ]
+
+circles:
+  circle_1:
+    center: [200, 150]
+    radius: 70
+  circle_2:
+    center: [450, 250]
+    radius: 60
+  circle_3:
+    center: [820, 470]
+    radius: 70
+  circle_4:
+    center: [1070, 570]
+    radius: 60
+  circle_5:
+    center: [200, 570]
+    radius: 60
+  circle_6:
+    center: [450, 470]
+    radius: 70
+  circle_7:
+    center: [820, 250]
+    radius: 60
+  circle_8:
+    center: [1070, 150]
+    radius: 70
+
+
+rectangles:
+  square_1:
+    coordinates: [[550.0, 80.0], [730.0, 80.0], [550.0, 140.0], [730.0, 140.0]]
+  square_2:
+    coordinates: [[550.0, 580.0], [730.0, 580.0], [550.0, 640.0], [730.0, 640.0]]
