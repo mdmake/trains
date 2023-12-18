@@ -3,10 +3,6 @@ import datetime
 import os
 from game.geometry import Point, Circle, Rectangle, Border
 
-# TODO НУЖНЫ ЛИ ЗНАЧЕНИЯ ПО УМОЛЧАНИЮ
-DEFAULT_NAME = 'FlyingLocomotivesMap'
-DEFAULT_TEXT = 'This map for FlyingLocomotivesGame!'
-
 
 class Map:
     """
@@ -20,7 +16,7 @@ class Map:
         :param path: Путь к файлу с картой.
         """
 
-        self.__path = path if path.endswith('.yaml') else path + '.yaml'
+        self.__path = path
         self.__description = dict()
         self.__complete = 0
         self.__circles = dict()
@@ -87,17 +83,6 @@ class Map:
 
         return self.__path
 
-    def checking_for_existence(self, path: str | None) -> None:
-        """
-        Установка пути к файлу.
-
-        :param path: Переданный путь.
-        :return: None.
-        """
-
-        if not os.path.exists(self.__path):
-            raise FileExistsError('Файл с указанным именем не существует!')
-
     @staticmethod
     def represent_list(dumper, data):
         """
@@ -116,7 +101,8 @@ class Map:
         :return: None.
         """
 
-        self.checking_for_existence(self.__path)
+        if not os.path.exists(self.__path):
+            raise FileExistsError('Файл с указанным именем не существует!')
 
         with open(path or self.__path, 'r', encoding='utf-8') as file:
             data = yaml.safe_load(file)
@@ -131,9 +117,9 @@ class Map:
             if not data.get('border', None):
                 raise Exception('В файле отсутствуют координаты границы поля!')
 
-            self.__description['map_name'] = data['description'].get('map_name', DEFAULT_NAME)
+            self.__description['map_name'] = data['description'].get('map_name', '')
             self.__description['date'] = data['description'].get('date', date_time)
-            self.__description['text'] = data['description'].get('text', DEFAULT_TEXT)
+            self.__description['text'] = data['description'].get('text', '')
             self.__description['complete'] = data['description'].get('complete', 0)
             self.__complete = self.__description['complete']
 
@@ -143,10 +129,9 @@ class Map:
 
     def save(self, path: str | None = None, map_name: str | None = None, text: str | None = None) -> None:
         """
-        Запись карты в файл (формат .yaml).
+        Запись карты в файл .yaml.
 
-        :param path: Если равен None, то карта сохраняется в файл, который был указан при инициализации карты,
-                     Иначе - карта сохраняется в файл, расположенный по переданному пути.
+        :param path: Путь к файлу .yaml с картой.
         :param map_name: Название карты.
         :param text: Описание.
         :return: None.
@@ -154,9 +139,9 @@ class Map:
 
         date_time = datetime.datetime.today().strftime("%H:%M:%S %d.%m.%Y")
 
+        self.__description['map_name'] = map_name or self.__description.get('map_name', '')
         self.__description['date'] = self.__description.get('date', date_time)
-        self.__description['map_name'] = map_name or self.__description.get('map_name', DEFAULT_NAME)
-        self.__description['text'] = text or self.__description.get('text', DEFAULT_TEXT)
+        self.__description['text'] = text or self.__description.get('text', '')
         self.__description['complete'] = self.__complete
 
         with open(path or self.__path, 'w', encoding='utf-8') as file:
