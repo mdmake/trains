@@ -7,9 +7,13 @@ class Scene:
     Класс, который создает игровое поле
     """
 
-    def __init__(self, filename, space):
+    def __init__(self, space, path: str | None = None, map_object: Map | None = None):
         self.space = space
-        self.map = Map(filename)
+
+        if not path and not map_object:
+            raise Exception('Путь к файлу с картой и объект карты не были переданы!')
+
+        self.map = Map(path) if path else map_object
 
     def set_scene(self):
         """
