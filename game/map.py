@@ -3,6 +3,7 @@ import datetime
 import os
 from game.geometry import Point, Circle, Rectangle, Border
 
+# TODO НУЖНЫ ЛИ ЗНАЧЕНИЯ ПО УМОЛЧАНИЮ
 DEFAULT_NAME = 'FlyingLocomotivesMap'
 DEFAULT_TEXT = 'This map for FlyingLocomotivesGame!'
 
@@ -12,21 +13,21 @@ class Map:
     Класс "Карта".
     """
 
-    def __init__(self, path: str | None = None):
+    def __init__(self, path: str):
         """
         Инициализация объекта карты.
 
         :param path: Путь к файлу с картой.
         """
 
+        self.__path = path if path.endswith('.yaml') else path + '.yaml'
         self.__description = dict()
         self.__complete = 0
         self.__circles = dict()
         self.__rectangles = dict()
         self.__border = dict()
-        self.__path = None
 
-        self.set_path(path)
+        self.load()
 
     @property
     def is_complete(self) -> bool:
@@ -86,46 +87,16 @@ class Map:
 
         return self.__path
 
-    def set_path(self, relative_path: str | None) -> None:
+    def checking_for_existence(self, path: str | None) -> None:
         """
         Установка пути к файлу.
 
-        :param relative_path: Переданный путь.
+        :param path: Переданный путь.
         :return: None.
         """
 
-        if relative_path:
-            self.__path = relative_path
-        else:
-            self.set_default_path()
-
-        if not self.__path.endswith('.yaml'):
-            self.__path += '.yaml'
-
-        if os.path.exists(self.__path):
-            self.load()
-            print(self.__description['date'])
-            self.save()
-        else:
-            self.save()
-
-    def set_default_path(self) -> None:
-        """
-        Установка дефолтного пути к файлу с картой.
-
-        :return: Дефолтный путь к новоиспеченному файлу.
-        """
-
-        counter = 0
-
-        while True:
-            name = f'{DEFAULT_NAME}{counter}.yaml' if counter > 0 else f'{DEFAULT_NAME}.yaml'
-
-            if os.path.exists(name):
-                counter += 1
-            else:
-                self.__path = name
-                break
+        if not os.path.exists(self.__path):
+            raise FileExistsError('Файл с указанным именем не существует!')
 
     @staticmethod
     def represent_list(dumper, data):
@@ -145,46 +116,37 @@ class Map:
         :return: None.
         """
 
+        self.checking_for_existence(self.__path)
+
         with open(path or self.__path, 'r', encoding='utf-8') as file:
             data = yaml.safe_load(file)
             date_time = datetime.datetime.today().strftime("%H:%M:%S %d.%m.%Y")
 
             if not data:
-                self.__description = {
-                    'map_name': 'DEFAULT_NAME',
-                    'date': date_time,
-                    'text': DEFAULT_TEXT,
-                    'complete': 0
-                }
-                self.__complete = 0
-                self.__border = dict()
-                self.__circles = dict()
-                self.__rectangles = dict()
-            else:
-                if not data.get('description', None):
-                    self.__description = {
-                        'map_name': DEFAULT_NAME,
-                        'date': date_time,
-                        'text': DEFAULT_TEXT,
-                        'complete': 0
-                    }
-                else:
-                    self.__description['map_name'] = data['description'].get('map_name', DEFAULT_NAME)
-                    self.__description['date'] = data['description'].get('date', date_time)
-                    self.__description['text'] = data['description'].get('text', DEFAULT_TEXT)
-                    self.__description['complete'] = data['description'].get('complete', 0)
+                raise Exception('Файл с картой пуст!')
 
-                self.__complete = self.__description['complete']
+            if not data.get('description', None):
+                raise Exception('В файле с картой отсутствует описание!')
 
-                self.__border = data.get('border', dict())
-                self.__circles = data.get('circles', dict())
-                self.__rectangles = data.get('rectangles', dict())
+            if not data.get('border', None):
+                raise Exception('В файле отсутствуют координаты границы поля!')
+
+            self.__description['map_name'] = data['description'].get('map_name', DEFAULT_NAME)
+            self.__description['date'] = data['description'].get('date', date_time)
+            self.__description['text'] = data['description'].get('text', DEFAULT_TEXT)
+            self.__description['complete'] = data['description'].get('complete', 0)
+            self.__complete = self.__description['complete']
+
+            self.__border = data['border']
+            self.__circles = data.get('circles', dict())
+            self.__rectangles = data.get('rectangles', dict())
 
     def save(self, path: str | None = None, map_name: str | None = None, text: str | None = None) -> None:
         """
         Запись карты в файл (формат .yaml).
 
-        :param path: Путь к файлу.
+        :param path: Если равен None, то карта сохраняется в файл, который был указан при инициализации карты,
+                     Иначе - карта сохраняется в файл, расположенный по переданному пути.
         :param map_name: Название карты.
         :param text: Описание.
         :return: None.
