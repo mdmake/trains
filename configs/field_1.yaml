@@ -1,7 +1,7 @@
 description:
   map_name: "test_field_1"
-  date: "13.12.23"
-  text: "one circle - one rectangle"
+  date: "24.12.23"
+  text: "high maze"
   complete: 100
 
 border:
@@ -10,9 +10,25 @@ border:
 
 circles:
   circle_1:
-    center: [640, 500]
-    radius: 156
+    center: [ 10, 10 ]
+    radius: 5
 
 rectangles:
   square_1:
-    coordinates: [[440.0, 95.0], [440.0, 205.0], [840.0, 205.0], [840.0, 95.0]]
+    coordinates: [ [ 215.0, 10.0 ], [ 225.0, 10.0 ], [ 215.0, 476.0 ], [ 225.0, 476.0 ] ]
+
+  square_2:
+    coordinates: [ [ 220.0, 471.0 ], [ 1060.0, 471.0 ], [ 220.0, 481.0 ], [ 1060.0, 481.0 ] ]
+
+  square_3:
+    coordinates: [ [ 425.0, 10.0 ], [ 435.0, 10.0 ], [ 425.0, 243.0 ], [ 435.0, 243.0 ] ]
+
+  square_4:
+    coordinates: [ [ 635.0, 10.0 ], [ 645.0, 10.0 ], [ 635.0, 243.0 ], [ 645.0, 243.0 ] ]
+
+  square_5:
+    coordinates: [ [ 845.0, 243.0 ], [ 855.0, 243.0 ], [ 845.0, 476.0 ], [ 855.0, 476.0 ] ]
+
+  square_6:
+    coordinates: [ [ 1060.0, 238.0 ], [ 1270.0, 238.0 ], [ 1060.0, 248.0 ], [ 1270.0, 248.0 ] ]
+
