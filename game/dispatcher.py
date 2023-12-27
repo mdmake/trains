@@ -10,13 +10,16 @@ from game.train import Train
 place = [5, 15]
 
 full_train_config = {
-    "tth": {"v_max": 20, "max_angle_speed": 5, },
-    "private": {"place": place}
+    "tth": {
+        "v_max": 20,
+        "max_angle_speed": 5,
+    },
+    "private": {"place": place},
 }
 
 full_laser_config = {
     "min_range": 0,
-    "max_range": 100,
+    "max_range": 300,
     "max_angle_speed": radians(5),
     "cone_opening_angle": radians(150),
     "zero": radians(10),
@@ -28,19 +31,21 @@ full_laser_config = {
 
 full_locator_config = {
     "min_range": 5,
-    "max_range": 40,
-    "max_angle_speed": radians(2),
+    "max_range": 150,
+    "max_angle_speed": radians(5),
     "cone_opening_angle": radians(120),
     "zero": radians(0),
     "place": place,
     "ray_count": 11,
-    "ray_step": 6,
+    "ray_step": radians(5),
 }
 
 
 class TPlayer:
     def __init__(self, method, method_kwargs):
-        self.navigation = NavigationSystem(x=0, y=0, alpha=0, config=full_train_config['tth'])
+        self.navigation = NavigationSystem(
+            x=600, y=300, alpha=0, config=full_train_config["tth"]
+        )
         self.navigation.set_measurement_method(method, **method_kwargs)
 
         self.laser = Laser("test_laser", full_laser_config)
@@ -54,7 +59,7 @@ class TPlayer:
         self.to_laser = {}
         self.to_locator = {}
         self.to_train = {}
-        self.to_navigation = {"v": 0, 'alpha': radians(0)}
+        self.to_navigation = {"v": 0, "alpha": radians(0)}
 
         self.from_laser = {}
         self.from_locator = {}
@@ -78,42 +83,46 @@ class TPlayer:
         self.locator.step()
         self.from_locator = self.locator.send()
 
-        self.to_train['laser'] = self.from_laser
-        self.to_train['locator'] = self.from_locator
+        self.to_train["laser"] = self.from_laser
+        self.to_train["locator"] = self.from_locator
 
         self.train.update_navigation(**self.from_navigation)
         self.train.receive(self.to_train)
         self.train.step()
         self.from_train = self.train.send()
 
-        self.to_navigation = self.from_train['navigation']
-        self.to_locator = self.from_train['locator']
-        self.to_laser = self.from_train['laser']
+        self.to_navigation = self.from_train["navigation"]
+        self.to_locator = self.from_train["locator"]
+        self.to_laser = self.from_train["laser"]
 
 
 class Player:
-
-    def __init__(self, *,
-                 space: pymunk.Space,
-                 position: tuple[float],
-                 angle: float,
-                 name: str = "Unknown Train",
-                 color: tuple[int] = (0, 0, 255)
-                 ):
+    def __init__(
+        self,
+        *,
+        space: pymunk.Space,
+        position: tuple[float],
+        angle: float,
+        name: str = "Unknown Train",
+        color: tuple[int] = (0, 0, 255)
+    ):
         self.space = space
 
         self.v_max = 10
         self.name = name
         self.color = color
-        self.create_shapes()
+
         self.map = set()
 
         method = self.space.segment_query_first
-        method_kwargs = {'radius': 0.1, 'shape_filter': pymunk.ShapeFilter()}
+        method_kwargs = {"radius": 0.1, "shape_filter": pymunk.ShapeFilter()}
         self.train = TPlayer(method, method_kwargs)
+        self.create_shapes()
 
     def create_shapes(self):
-        self.train_shape = pymunk.Poly(None, ((0.0, 0.0), (-15.0, -50.0), (15.0, -50.0)))
+        self.train_shape = pymunk.Poly(
+            None, ((0.0, 0.0), (-15.0, -50.0), (15.0, -50.0))
+        )
         train_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
         self.train_shape.body = train_body
         train_body.angle = self.train.navigation.alpha
@@ -130,11 +139,37 @@ class Player:
 
         self.train.step()
 
-        # self.
+        self.train_body.angle = self.train.navigation.alpha - radians(90)
+        self.train_body.position = self.train.navigation.x, self.train.navigation.y
+
+        lines = []
+
+        if "distance" in self.train.from_laser:
+            lines.append(
+                (
+                    (self.train.laser.x, self.train.laser.y),
+                    (
+                        self.train.from_laser["distance"]["x"],
+                        self.train.from_laser["distance"]["y"],
+                    ),
+                )
+            )
+
+        if "distance" in self.train.from_locator:
+            for item in self.train.from_locator["distance"]:
+                lines.append(
+                    (
+                        (self.train.locator.x, self.train.locator.y),
+                        (item["x"], item["y"]),
+                    )
+                )
 
         data = {
-            "points": [],
-            "lines": [],
+            "points": [
+                (self.train.locator.x, self.train.locator.y),
+                (self.train.laser.x, self.train.laser.y),
+            ],
+            "lines": lines,
             "circles": [],
         }
 

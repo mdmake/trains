@@ -153,14 +153,14 @@ class Laser(SightingSystem):
     def step(self):
         # обновляем собственные координаты в нск
         self.x = (
-                self.ship_x
-                + self.shift_x * cos(self.ship_alpha)
-                - self.shift_y * sin(self.ship_alpha)
+            self.ship_x
+            + self.shift_x * cos(self.ship_alpha)
+            - self.shift_y * sin(self.ship_alpha)
         )
         self.y = (
-                self.ship_y
-                + self.shift_x * sin(self.ship_alpha)
-                + self.shift_y * cos(self.ship_alpha)
+            self.ship_y
+            + self.shift_x * sin(self.ship_alpha)
+            + self.shift_y * cos(self.ship_alpha)
         )
 
         # обновляем собственный угол в нск:
@@ -198,7 +198,7 @@ class Laser(SightingSystem):
             )
 
             if result:
-                self.point_x, self.point_y = result
+                self.point_x, self.point_y = result.point
                 distance = sqrt(
                     (self.x - self.point_x) ** 2 + (self.y - self.point_y) ** 2
                 )
@@ -239,7 +239,7 @@ class Locator(SightingSystem):
         self.min_range = self.config["min_range"]
         self.max_range = self.config["max_range"]
         self.shift_x, self.shift_y = self.config["place"]
-        self.ray_count = -self.config["ray_count"]
+        self.ray_count = self.config["ray_count"]
 
         self.ssk_alpha = 0.0
 
@@ -286,14 +286,14 @@ class Locator(SightingSystem):
     def step(self):
         # обновляем собственные координаты в нск
         self.x = (
-                self.ship_x
-                + self.shift_x * cos(self.ship_alpha)
-                - self.shift_y * sin(self.ship_alpha)
+            self.ship_x
+            + self.shift_x * cos(self.ship_alpha)
+            - self.shift_y * sin(self.ship_alpha)
         )
         self.y = (
-                self.ship_y
-                + self.shift_x * sin(self.ship_alpha)
-                + self.shift_y * cos(self.ship_alpha)
+            self.ship_y
+            + self.shift_x * sin(self.ship_alpha)
+            + self.shift_y * cos(self.ship_alpha)
         )
 
         # обновляем собственный угол в нск:
@@ -323,27 +323,30 @@ class Locator(SightingSystem):
         if "distance" in self.query:
             self.query_data["distance"] = []
 
-            self.point_x = self.x + self.max_range * cos(self.alpha)
-            self.point_y = self.y + self.max_range * sin(self.alpha)
+            # self.point_x = self.x + self.max_range * cos(self.alpha)
+            # self.point_y = self.y + self.max_range * sin(self.alpha)
 
-            begin_angle = self.alpha - (self.ray_count - 1) * self.ray_step / 2
+            begin_angle = self.ssk_alpha - (self.ray_count - 1) * self.ray_step / 2
 
             for ray_num in range(self.ray_count):
-                angle = self.ship_alpha + begin_angle * ray_num
+                angle = (
+                    self.ship_alpha
+                    + self.shift_alpha
+                    + begin_angle
+                    + ray_num * self.ray_step
+                )
                 distance = self.max_range
 
-                self.point_x = distance * cos(angle)
-                self.point_y = distance * sin(angle)
+                point_x = self.x + distance * cos(angle)
+                point_y = self.y + distance * sin(angle)
 
                 result = self.method(
-                    (self.x, self.y), (self.point_x, self.point_y), **self.method_kwargs
+                    (self.x, self.y), (point_x, point_y), **self.method_kwargs
                 )
 
                 if result:
-                    self.point_x, self.point_y = result
-                    distance = sqrt(
-                        (self.x - self.point_x) ** 2 + (self.y - self.point_y) ** 2
-                    )
+                    point_x, point_y = result.point
+                    distance = sqrt((self.x - point_x) ** 2 + (self.y - point_y) ** 2)
                     self.measurement[ray_num] = True
                 else:
                     distance = self.max_range
@@ -353,11 +356,11 @@ class Locator(SightingSystem):
                 self.point_y_ssk[ray_num] = distance * sin(self.ssk_alpha)
 
                 query_data = {
-                    "x": self.point_x,
-                    "y": self.point_y,
-                    "measurement": self.measurement,
-                    "ssk_x": self.point_x,
-                    "ssk_y": self.point_y,
+                    "x": point_x,
+                    "y": point_y,
+                    "measurement": self.measurement[ray_num],
+                    "ssk_x": self.point_x_ssk[ray_num],
+                    "ssk_y": self.point_y_ssk[ray_num],
                     "value": distance,
                 }
 

@@ -1,13 +1,13 @@
+from math import radians
+
 import pyglet
 import pymunk
 from pyglet import shapes
 from pyglet.window import key
 from pymunk.pyglet_util import DrawOptions
 
-from game.scene import Scene
 from game.dispatcher import Player
-
-from math import radians
+from game.scene import Scene
 
 width = 1280
 height = 720
@@ -32,16 +32,16 @@ sprites = []
 
 scene = Scene(space, 'configs/field.yaml')
 scene.set_scene()
-#scene.set_default_scene(space=space, width=width, height=height, margin=20)
+# scene.set_default_scene(space=space, width=width, height=height, margin=20)
 
 players = []
 
-# player = Player(
-#     space=space,
-#     position=player_position,
-#     angle=player_angle
-# )
-# players.append(player)
+player = Player(
+    space=space,
+    position=player_position,
+    angle=player_angle
+)
+players.append(player)
 
 key_vector = {"x": 0.0, "y": 0.0, "alpha": 0.0}
 
@@ -119,34 +119,27 @@ def on_key_release(symbol, modifiers):
 
 # object_count
 def update(dt):
-    # if not player.train.auto:
-    #     player.train.manual_update(*[key_vector[k] for k in ["x", "y", "alpha"]])
-    # else:
-    #     key_vector[0] = 0
-    #     key_vector[1] = 0
-    #     key_vector[2] = 0
-
     sprites.clear()
 
     for item in players:
 
-        data = item.update()
+        data = item.step()
         color = (200, 0, 0)
         # отрисуем точки касания
         for touch_point in list(data['points']):
-            sprites.append(shapes.Circle(touch_point[0], touch_point[1], 3, color=item.train.color, batch=batch))
+            sprites.append(shapes.Circle(touch_point[0], touch_point[1], 3, color=item.color, batch=batch))
 
         for line in data["lines"]:
             sprites.append(shapes.Line(*line[0], *line[1], 3, color=color, batch=batch))
-            #sprites.append(shapes.Line(*line[0], *line[1], 3, color=line[2], batch=batch))
+            # sprites.append(shapes.Line(*line[0], *line[1], 3, color=line[2], batch=batch))
 
         for circle in data["circles"]:
-            #sprites.append(shapes.Arc(circle[0][0], circle[0][1], circle[1], color=circle[2], batch=batch))
+            # sprites.append(shapes.Arc(circle[0][0], circle[0][1], circle[1], color=circle[2], batch=batch))
             sprites.append(shapes.Arc(circle[0][0], circle[0][1], circle[1], color=color, batch=batch))
 
     space.step(dt)
 
 
 if __name__ == '__main__':
-    pyglet.clock.schedule_interval(update, 1 / 60.0)
+    pyglet.clock.schedule_interval(update, 1 / 10.0)
     pyglet.app.run()
