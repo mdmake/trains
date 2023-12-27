@@ -7,6 +7,8 @@ from game.exceptions import ConfigError
 from game.mathfunction import sign
 from game.trainsystem import TrainSystem
 
+EPS = 1e-5
+
 
 class NavigationSystem(TrainSystem):
     """
@@ -19,7 +21,7 @@ class NavigationSystem(TrainSystem):
     """
 
     def __init__(
-            self, x: float | int, y: float | int, alpha: float | int, config: str | dict
+        self, x: float | int, y: float | int, alpha: float | int, config: str | dict
     ):
         self.x = x
         self.y = y
@@ -48,7 +50,7 @@ class NavigationSystem(TrainSystem):
         """
         self.config = config.copy()
 
-        for item in ['max_angle_speed', "v_max"]:
+        for item in ["max_angle_speed", "v_max"]:
             if item not in self.config:
                 raise ConfigError(f"{item} not in config")
 
@@ -63,7 +65,7 @@ class NavigationSystem(TrainSystem):
         with open(filename, "r") as f:
             data = yaml.safe_load(f)["train"]["tth"]
 
-        for item in ['max_angle_speed', "v_max"]:
+        for item in ["max_angle_speed", "v_max"]:
             if item not in self.config:
                 raise ConfigError(f"{item} not in config")
 
@@ -94,7 +96,7 @@ class NavigationSystem(TrainSystem):
 
         result = self.method((self.x, self.y), (x, y), **self.method_kwargs)
         if result:
-            x, y = result
+            x, y = result.point
             return x, y, alpha, True
         return x, y, alpha, False
 
@@ -103,7 +105,8 @@ class NavigationSystem(TrainSystem):
         self._new_v = query["v"]
 
     def step(self):
-        self.x, self.y, self.alpha, self.collision = self.step_restriction()
+        if self._new_v > EPS:
+            self.x, self.y, self.alpha, self.collision = self.step_restriction()
         self._new_v = 0.0
         self._new_alpha = 0.0
 
