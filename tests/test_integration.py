@@ -92,6 +92,8 @@ class Player:
 
 def test_system_creation():
     player = Player()
-    player.step()
+
+    for _ in range(10):
+        player.step()
 
     assert True

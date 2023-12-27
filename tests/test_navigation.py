@@ -13,6 +13,7 @@ def test_creation():
         "max_angle_speed": 5,  # максимальная угловая скорость
     }
     navigation = NavigationSystem(0, 0, 0, config)
+    assert navigation is not None
 
 def test_config_invalid():
     config = {}
@@ -21,7 +22,7 @@ def test_config_invalid():
         NavigationSystem(0, 0, 0, config)
         assert False
     except ConfigError:
-        pass
+        assert True
 
     config = {
         "v_max": 20,
@@ -30,7 +31,7 @@ def test_config_invalid():
         NavigationSystem(0, 0, 0, config)
         assert False
     except ConfigError:
-        pass
+        assert True
 
     config = {
         "max_angle_speed": 5,  # максимальная угловая скорость
@@ -39,9 +40,9 @@ def test_config_invalid():
         NavigationSystem(0, 0, 0, config)
         assert False
     except ConfigError:
-        pass
+        assert True
 
-    assert True
+
 
 
 def test_step_zero_without_collision():
