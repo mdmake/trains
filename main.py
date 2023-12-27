@@ -130,7 +130,7 @@ def update(dt):
             sprites.append(shapes.Circle(touch_point[0], touch_point[1], 3, color=item.color, batch=batch))
 
         for line in data["lines"]:
-            sprites.append(shapes.Line(*line[0], *line[1], 3, color=color, batch=batch))
+            sprites.append(shapes.Line(*line[0], *line[1], 1, color=color, batch=batch))
             # sprites.append(shapes.Line(*line[0], *line[1], 3, color=line[2], batch=batch))
 
         for circle in data["circles"]:
