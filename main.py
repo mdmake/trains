@@ -30,7 +30,7 @@ space.gravity = 0, -1000
 handler = space.add_default_collision_handler()
 sprites = []
 
-scene = Scene('configs/field.yaml', space)
+scene = Scene(space, path='configs/field.yaml')
 scene.set_scene()
 #scene.set_default_scene(space=space, width=width, height=height, margin=20)
 
