@@ -1,5 +1,5 @@
 import pymunk
-from map import Map
+from game.map import Map
 
 
 class Scene:
