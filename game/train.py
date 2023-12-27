@@ -1,56 +1,77 @@
 import uuid
-from math import cos, sin, radians
-from random import uniform
-from .locator import Locator
-from .interfaces import LocatorInterface, LaserInterface
+from copy import deepcopy
+from math import radians
+
+import yaml
+
+from game.trainsystem import TrainSystem
 
 
-class Train:
-
-    def __init__(self, alpha, position, **arguments):
-
+class Train(TrainSystem):
+    def __init__(self, name: str, config: str | dict):
         self.id = uuid.uuid4()
 
-        self.alpha = alpha  # строительная ось от оси x против часовой стрелки
-        self.position = position
-        self.v = 0
+        self.alpha = None
+        self.x = None
+        self.y = None
+        self.v = None
 
-        self.laser = LaserInterface()
-
-        self.locator = LocatorInterface()
-
-        self.laser.get_config()
-        self.locator.get_config()
-
-        self.ready = False
-        self.laser_config = None
-        self.locator_config = None
-        self.name = None
-        self.color = None
-
-    def set_description(self, name=None, color=None):
         self.name = name
-        self.color = color
+        self.query_data = {}
+        self.query = {}
 
-    def update(self, position, laser):
-
-        if not self.ready:
-            if not self.laser_config:
-                self.laser_config = self.laser.config
-            if not self.locator_config:
-                self.locator_config = self.locator.config
-
-            self.ready = self.laser_config and self.locator_config
+        if isinstance(config, dict):
+            self._unpack_config(config)
         else:
-            pass
+            self._load_config(config)
 
-    def info(self):
+        self.v_max = self.config["tth"]["v_max"]
+        self.place = self.config["private"]["place"]
 
-        pass
+        self.locator_alpha = 0
+        self.laser_alpha = 0
 
-    def processing(self):
+    def _unpack_config(self, data: dict):
+        self.config = data.copy()
 
-        if self.laser_config and self.locator_config:
-            pass
-        else:
-            pass
+        self.max_angle_speed = self.config["tth"]["max_angle_speed"]
+
+    def _load_config(self, filename):
+        with open(filename, "r") as f:
+            self.config = yaml.safe_load(f)["train"]
+
+        self.max_angle_speed = radians(self.config["tth"]["max_angle_speed"])
+
+    def update_navigation(self, x: float | int, y: float | int, alpha: float | int):
+        """
+        Обновление навигационной информации
+
+        :param x: координата x борта в абсолютной СК
+        :param y: координата y борта в абсолютной СК
+        :param alpha: угол поворота в абсолютной СК от оси х, против часовой стрелки
+        """
+        self.x = x
+        self.y = y
+        self.alpha = alpha
+
+    def send(self):
+        return self.query_data
+
+    def receive(self, query: dict):
+        self.query = deepcopy(query)
+
+    def step(self):
+        self.locator_alpha += radians(1)
+        self.laser_alpha += radians(1)
+
+        self.query_data = {"locator": {}}
+        self.query_data["locator"]["turn"] = self.locator_alpha
+        self.query_data["locator"]["distance"] = True
+
+        self.query_data["laser"] = {}
+        self.query_data["laser"]["turn"] = self.locator_alpha
+        self.query_data["laser"]["distance"] = True
+
+        self.query_data["navigation"] = {}
+        self.query_data["navigation"]["v"] = 5
+        self.query_data["navigation"]["alpha"] = 0
