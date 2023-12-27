@@ -14,13 +14,12 @@ def test_creation():
     }
     navigation = NavigationSystem(0, 0, 0, config)
 
-
 def test_config_invalid():
     config = {}
 
     try:
         NavigationSystem(0, 0, 0, config)
-        return False
+        assert False
     except ConfigError:
         pass
 
@@ -29,7 +28,7 @@ def test_config_invalid():
     }
     try:
         NavigationSystem(0, 0, 0, config)
-        return False
+        assert False
     except ConfigError:
         pass
 
@@ -38,11 +37,11 @@ def test_config_invalid():
     }
     try:
         NavigationSystem(0, 0, 0, config)
-        return False
+        assert False
     except ConfigError:
         pass
 
-    return True
+    assert True
 
 
 def test_step_zero_without_collision():
