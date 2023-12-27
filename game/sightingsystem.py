@@ -5,7 +5,6 @@ from typing import Callable
 import yaml
 
 from game.exceptions import ConfigError
-from game.mathfunction import sign
 from game.trainsystem import TrainSystem
 
 
@@ -46,6 +45,7 @@ class SightingSystem(TrainSystem):
         self.shift_alpha = None
 
         self.query_data = {}
+        self.query = {}
 
         if isinstance(config, dict):
             self._unpack_config(config)
@@ -77,6 +77,9 @@ class SightingSystem(TrainSystem):
     def send(self):
         return self.query_data
 
+    def receive(self, query: dict):
+        self.query = deepcopy(query)
+
 
 class Laser(SightingSystem):
     """
@@ -97,7 +100,6 @@ class Laser(SightingSystem):
             "fire_time_limit",
             "max_angle_speed_tracking",
         }
-        self.query = None
 
         super().__init__(name, config)
 
@@ -148,20 +150,17 @@ class Laser(SightingSystem):
         self.cone_opening_angle_right = -radians(self.config["cone_opening_angle"])
         self.shift_alpha = radians(self.config["zero"])
 
-    def receive(self, query):
-        self.query = deepcopy(query)
-
     def step(self):
         # обновляем собственные координаты в нск
         self.x = (
-            self.ship_x
-            + self.shift_x * cos(self.ship_alpha)
-            - self.shift_y * sin(self.ship_alpha)
+                self.ship_x
+                + self.shift_x * cos(self.ship_alpha)
+                - self.shift_y * sin(self.ship_alpha)
         )
         self.y = (
-            self.ship_y
-            + self.shift_x * sin(self.ship_alpha)
-            + self.shift_y * cos(self.ship_alpha)
+                self.ship_y
+                + self.shift_x * sin(self.ship_alpha)
+                + self.shift_y * cos(self.ship_alpha)
         )
 
         # обновляем собственный угол в нск:
@@ -222,111 +221,144 @@ class Laser(SightingSystem):
 
 
 class Locator(SightingSystem):
-    def __init__(self, name, config: str | dict):
+    def __init__(self, name: str, config: str | dict):
         self.required_fields = {
             "min_range",
             "max_range",
             "max_angle_speed",
             "zero",
+            "place",
             "cone_opening_angle",
             "ray_count",
             "ray_step",
         }
+        self.query = None
 
         super().__init__(name, config)
 
-    def _unpack_config(self, data):
-        config = data.copy()
+        self.min_range = self.config["min_range"]
+        self.max_range = self.config["max_range"]
+        self.shift_x, self.shift_y = self.config["place"]
+        self.ray_count = -self.config["ray_count"]
 
-        config["max_angle_speed"] = config["max_angle_speed"]
-        config["cone_opening_angle"] = config["cone_opening_angle"]
-        config["ray_step"] = config["ray_step"]
+        self.ssk_alpha = 0.0
 
-        if self.required_fields - set(data.keys()):
-            raise KeyError(
-                f"incomplete config, {self.required_fields - config.keys()} not in config"
+        # точка замера лазером в нск
+        self.point_x = [None] * self.ray_count
+        self.point_y = [None] * self.ray_count
+
+        # точка замера лазером в сск
+        self.point_x_ssk = [None] * self.ray_count
+        self.point_y_ssk = [None] * self.ray_count
+
+        # есть точка или нет
+        self.measurement = [False] * self.ray_count
+
+    def _unpack_config(self, data: dict):
+        self.config = data.copy()
+
+        if self.required_fields - self.config.keys():
+            raise ConfigError(
+                f"Incomplete config, {self.required_fields - self.config.keys()} not in config"
             )
-        self.config = config
+
+        self.max_angle_speed = self.config["max_angle_speed"]
+        self.shift_alpha = self.config["zero"]
+        self.cone_opening_angle_left = self.config["cone_opening_angle"]
+        self.cone_opening_angle_right = -self.config["cone_opening_angle"]
+        self.ray_step = self.config["ray_step"]
 
     def _load_config(self, filename):
         with open(filename, "r") as f:
-            data = yaml.safe_load(f)["locator"]
+            self.config = yaml.safe_load(f)["locator"]
 
-        if len(self.required_fields - data.keys()) > 0:
+        if self.required_fields - self.config.keys():
             raise KeyError(
-                f"incomplete config, {self.required_fields - data.keys()} not in config"
+                f"incomplete config, {self.required_fields - self.config.keys()} not in config"
             )
-        config = data
-        # в файле конфига все в градусах -
-        config["max_angle_speed"] = radians(config["max_angle_speed"])
-        config["cone_opening_angle"] = radians(config["cone_opening_angle"])
-        config["ray_step"] = radians(config["ray_step"])
 
-        self.config = config
+        self.max_angle_speed = radians(self.config["max_angle_speed"])
+        self.cone_opening_angle_left = radians(self.config["cone_opening_angle"])
+        self.cone_opening_angle_right = -radians(self.config["cone_opening_angle"])
+        self.shift_alpha = radians(self.config["zero"])
+        self.ray_step = radians(self.config["ray_step"])
 
-    def processing_query(self, query):
-        if "config" in query:
-            self.query_data["config"] = {
-                name: getattr(self, name) for name in self.config.keys()
-            }
+    def step(self):
+        # обновляем собственные координаты в нск
+        self.x = (
+                self.ship_x
+                + self.shift_x * cos(self.ship_alpha)
+                - self.shift_y * sin(self.ship_alpha)
+        )
+        self.y = (
+                self.ship_y
+                + self.shift_x * sin(self.ship_alpha)
+                + self.shift_y * cos(self.ship_alpha)
+        )
 
-        if "turn" in query:
-            _delta = query["turn"] - self.alpha
-            delta = sign(_delta) * min(self.max_angle_speed, abs(_delta))
-            result = (
-                self.alpha + delta
-            )  # угол поврота отн строительной оси паравоза против - положительный
+        # обновляем собственный угол в нск:
+        # угол поврота борта + установочный угол + угол поворота относительно собственной оси
+        self.alpha = self.ssk_alpha + self.shift_alpha + self.ship_alpha
 
-            min_angle = self.zero - self.cone_opening_angle
-            max_angle = self.zero + self.cone_opening_angle
+        # команда не поворот лазера относительно строительной оси - приходит угол в абсолютной системе координат
+        # нам дали команду поменять курс на новый, угол курса - self.query['turn]:
+        if "turn" in self.query:
+            restriction = None
 
-            if result < min_angle:
-                result = min_angle
-            elif result > max_angle:
-                result = max_angle
+            self.ssk_alpha = self.query["turn"] - self.shift_alpha
 
-            self.angle = result
+            if self.ssk_alpha > self.cone_opening_angle_left:
+                self.ssk_alpha = self.cone_opening_angle_left
+                restriction = 1
+            elif self.ssk_alpha < self.cone_opening_angle_right:
+                self.ssk_alpha = self.cone_opening_angle_right
+                restriction = -1
 
-        self.query_data["angle"] = self.angle
+            self.alpha = self.shift_alpha + self.ssk_alpha
 
-        if "distance" in query:
-            x, y = self.coords
-            x_pos, y_pos = self.place  # отн кооординаты точки посадки
+            self.query_data["alpha"] = {}
+            self.query_data["alpha"]["value"] = self.alpha
+            self.query_data["alpha"]["restriction"] = restriction
 
-            x_pos_alpha = x_pos * cos(self.ship_alpha) - y_pos * sin(self.ship_alpha)
-            y_pos_alpha = x_pos * sin(self.ship_alpha) + y_pos * cos(self.ship_alpha)
+        if "distance" in self.query:
+            self.query_data["distance"] = []
 
-            x_pos_abs = x_pos_alpha + x
-            y_pos_abs = y_pos_alpha + y
+            self.point_x = self.x + self.max_range * cos(self.alpha)
+            self.point_y = self.y + self.max_range * sin(self.alpha)
 
-            begin_angle = self.zero - (self.ray_count - 1) * self.ray_step / 2
-
-            measurement = []
-            self.query_data["measurement"] = {}
+            begin_angle = self.alpha - (self.ray_count - 1) * self.ray_step / 2
 
             for ray_num in range(self.ray_count):
                 angle = self.ship_alpha + begin_angle * ray_num
                 distance = self.max_range
 
-                x_end = distance * cos(angle)
-                y_end = distance * sin(angle)
+                self.point_x = distance * cos(angle)
+                self.point_y = distance * sin(angle)
 
                 result = self.method(
-                    (x_pos_abs, y_pos_abs), (x_end, y_end), **self.method_kwargs
+                    (self.x, self.y), (self.point_x, self.point_y), **self.method_kwargs
                 )
 
-                # result (x, y) or None
-                results = {}
-                results["angle"] = angle
                 if result:
-                    x_, y_ = result
-                    dist = sqrt((x_pos_abs - x_) ** 2 + (y_pos_abs - y_) ** 2)
-                    results["distance"] = dist
-                    results["obstacle"] = True
+                    self.point_x, self.point_y = result
+                    distance = sqrt(
+                        (self.x - self.point_x) ** 2 + (self.y - self.point_y) ** 2
+                    )
+                    self.measurement[ray_num] = True
                 else:
-                    results["distance"] = self.max_range
-                    results["obstacle"] = False
+                    distance = self.max_range
+                    self.measurement[ray_num] = False
 
-                measurement.append(results)
+                self.point_x_ssk[ray_num] = distance * cos(self.ssk_alpha)
+                self.point_y_ssk[ray_num] = distance * sin(self.ssk_alpha)
 
-            self.query_data["measurement"] = measurement
+                query_data = {
+                    "x": self.point_x,
+                    "y": self.point_y,
+                    "measurement": self.measurement,
+                    "ssk_x": self.point_x,
+                    "ssk_y": self.point_y,
+                    "value": distance,
+                }
+
+                self.query_data["distance"].append(query_data)

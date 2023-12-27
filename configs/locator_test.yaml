@@ -4,5 +4,6 @@ locator:
     max_angle_speed: 2 #deg/sec
     cone_opening_angle: 120 #deg
     zero: 0
+    place: [5, 15]
     ray_count: 11
     ray_step: 6
