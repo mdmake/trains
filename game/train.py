@@ -61,8 +61,8 @@ class Train(TrainSystem):
         self.query = deepcopy(query)
 
     def step(self):
-        self.locator_alpha = remainder(self.locator_alpha + radians(5), tau)
-        self.laser_alpha -= remainder(self.laser_alpha - radians(5), tau)
+        self.locator_alpha = remainder(self.locator_alpha + radians(1), tau)
+        self.laser_alpha = remainder(self.laser_alpha + radians(1), tau)
 
         self.query_data = {"locator": {}}
         self.query_data["locator"]["turn"] = self.locator_alpha

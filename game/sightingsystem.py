@@ -1,5 +1,5 @@
 from copy import deepcopy
-from math import radians, cos, sin, sqrt
+from math import radians, cos, sin, sqrt, remainder, tau
 from typing import Callable
 
 import yaml
@@ -172,9 +172,7 @@ class Laser(SightingSystem):
         if "turn" in self.query:
             restriction = None
 
-            delta = self.query["turn"] - self.alpha
-
-            self.ssk_alpha = self.query["turn"] - self.shift_alpha
+            self.ssk_alpha = remainder(self.query["turn"] - self.shift_alpha - self.ship_alpha, tau)
 
             if self.ssk_alpha > self.cone_opening_angle_left:
                 self.ssk_alpha = self.cone_opening_angle_left
@@ -183,7 +181,7 @@ class Laser(SightingSystem):
                 self.ssk_alpha = self.cone_opening_angle_right
                 restriction = -1
 
-            self.alpha = self.shift_alpha + self.ssk_alpha
+            self.alpha = remainder(self.ship_alpha + self.shift_alpha + self.ssk_alpha, tau)
 
             self.query_data["alpha"] = {}
             self.query_data["alpha"]["value"] = self.alpha
@@ -305,7 +303,7 @@ class Locator(SightingSystem):
         if "turn" in self.query:
             restriction = None
 
-            self.ssk_alpha = self.query["turn"] - self.shift_alpha
+            self.ssk_alpha = remainder(self.query["turn"] - self.shift_alpha - self.ship_alpha, tau)
 
             if self.ssk_alpha > self.cone_opening_angle_left:
                 self.ssk_alpha = self.cone_opening_angle_left
@@ -314,7 +312,7 @@ class Locator(SightingSystem):
                 self.ssk_alpha = self.cone_opening_angle_right
                 restriction = -1
 
-            self.alpha = self.shift_alpha + self.ssk_alpha
+            self.alpha = remainder(self.ship_alpha + self.shift_alpha + self.ssk_alpha, tau)
 
             self.query_data["alpha"] = {}
             self.query_data["alpha"]["value"] = self.alpha
