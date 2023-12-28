@@ -7,7 +7,7 @@ from game.sightingsystem import Laser
 from game.sightingsystem import Locator
 from game.train import Train
 
-place = [5, 0]
+place = [5, 15]
 
 full_train_config = {
     "tth": {
@@ -44,7 +44,7 @@ full_locator_config = {
 class TPlayer:
     def __init__(self, method, method_kwargs):
         self.navigation = NavigationSystem(
-            x=600, y=300, alpha=radians(0), config=full_train_config["tth"]
+            x=700, y=400, alpha=radians(0), config=full_train_config["tth"]
         )
         self.navigation.set_measurement_method(method, **method_kwargs)
 
@@ -134,6 +134,54 @@ class Player:
         self.train_body = train_body
         self.space.add(self.train_body, self.train_shape)
 
+    def prepare_laser_lines(self, vs: Laser | Locator, vs_data: dict):
+        laser_lines = {}
+        laser_lines['restrictions'] = {}
+        laser_lines['restrictions']['lines'] = []
+        laser_lines['restrictions']['arcs'] = []
+
+        left_res = vs.ship_alpha + vs.shift_alpha + vs.cone_opening_angle_left
+        right_res = vs.ship_alpha + vs.shift_alpha + vs.cone_opening_angle_right
+
+        laser_res_x = vs.x + vs.max_range * cos(left_res)
+        laser_res_y = vs.y + vs.max_range * sin(left_res)
+
+        laser_lines['restrictions']['lines'].append(
+            ((vs.x, vs.y), (laser_res_x, laser_res_y)))
+
+        laser_res_x = vs.x + vs.max_range * cos(right_res)
+        laser_res_y = vs.y + vs.max_range * sin(right_res)
+
+        laser_lines['restrictions']['lines'].append(
+            ((vs.x, vs.y), (laser_res_x, laser_res_y))
+        )
+
+        laser_lines['restrictions']['arcs'].append(
+            (
+                vs.x,
+                vs.y,
+                vs.max_range,
+                2 * vs.cone_opening_angle_left,
+                right_res,
+            ))
+
+        laser_lines['ray'] = []
+        laser_lines['measurement'] = []
+        if "distance" in vs_data:
+            for ray in vs_data["distance"]:
+                laser_lines['ray'].append((
+                    (vs.x, vs.y),
+                    (ray["x"], ray["y"],),)
+                )
+                laser_lines['measurement'].append(ray['measurement'])
+
+        if 'alpha' in vs_data:
+            laser_lines["alpha_restriction"] = vs_data["alpha"]["restriction"]
+        else:
+            laser_lines["alpha_restriction"] = 0
+
+        return laser_lines
+
     def step(self) -> dict[str, list]:
         # запрашиваем локатор
 
@@ -143,48 +191,11 @@ class Player:
         self.train_body.position = self.train.navigation.x, self.train.navigation.y
 
         lines = []
+        arcs = []
 
-        left_res = self.train.laser.ship_alpha + self.train.laser.shift_alpha + self.train.laser.cone_opening_angle_left
-        right_res = self.train.laser.ship_alpha + self.train.laser.shift_alpha + self.train.laser.cone_opening_angle_right
+        laser_lines = self.prepare_laser_lines(self.train.laser, self.train.from_laser)
+        locator_lines = self.prepare_laser_lines(self.train.locator, self.train.from_locator)
 
-        laser_res_x = self.train.laser.x + self.train.laser.max_range * cos(left_res)
-        laser_res_y = self.train.laser.y + self.train.laser.max_range * sin(left_res)
-        lines.append(((self.train.laser.x, self.train.laser.y), (laser_res_x, laser_res_y)))
-
-        laser_res_x = self.train.laser.x + self.train.laser.max_range * cos(right_res)
-        laser_res_y = self.train.laser.y + self.train.laser.max_range * sin(right_res)
-        lines.append(((self.train.laser.x, self.train.laser.y), (laser_res_x, laser_res_y)))
-
-        left_res = self.train.locator.ship_alpha + self.train.locator.shift_alpha + self.train.locator.cone_opening_angle_left
-        right_res = self.train.locator.ship_alpha + self.train.locator.shift_alpha + self.train.locator.cone_opening_angle_right
-
-        locator_res_x = self.train.locator.x + self.train.locator.max_range * cos(left_res)
-        locator_res_y = self.train.locator.y + self.train.locator.max_range * sin(left_res)
-        lines.append(((self.train.locator.x, self.train.locator.y), (locator_res_x, locator_res_y)))
-
-        locator_res_x = self.train.locator.x + self.train.locator.max_range * cos(right_res)
-        locator_res_y = self.train.locator.y + self.train.locator.max_range * sin(right_res)
-        lines.append(((self.train.locator.x, self.train.locator.y), (locator_res_x, locator_res_y)))
-
-        if "distance" in self.train.from_laser:
-            lines.append(
-                (
-                    (self.train.laser.x, self.train.laser.y),
-                    (
-                        self.train.from_laser["distance"]["x"],
-                        self.train.from_laser["distance"]["y"],
-                    ),
-                )
-            )
-
-        if "distance" in self.train.from_locator:
-            for item in self.train.from_locator["distance"]:
-                lines.append(
-                    (
-                        (self.train.locator.x, self.train.locator.y),
-                        (item["x"], item["y"]),
-                    )
-                )
 
         data = {
             "points": [
@@ -193,6 +204,10 @@ class Player:
             ],
             "lines": lines,
             "circles": [],
+            "arcs": arcs,
+            "laser": laser_lines,
+            "locator": locator_lines,
+
         }
 
         return data

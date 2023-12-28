@@ -118,6 +118,37 @@ def on_key_release(symbol, modifiers):
 
 
 # object_count
+
+
+def draw_ll(laser, generic_color, touch_color, restriction_color):
+    # нарисуем лазер
+    for line in laser['restrictions']["lines"]:
+        sprites.append(shapes.Line(*line[0], *line[1], 1, color=generic_color, batch=batch))
+
+    for arc in laser['restrictions']["arcs"]:
+        sprites.append(
+            shapes.Arc(x=arc[0], y=arc[1], radius=arc[2], angle=arc[3], start_angle=arc[4], color=generic_color,
+                       batch=batch))
+
+    for ray, measurement in zip(laser['ray'], laser["measurement"]):
+
+        if measurement:
+            color = touch_color
+        elif laser["alpha_restriction"]:
+            color = restriction_color
+        else:
+            color = generic_color
+        sprites.append(shapes.Line(*ray[0], *ray[1], 2, color=color, batch=batch))
+
+    for line in laser['restrictions']["lines"]:
+        sprites.append(shapes.Line(*line[0], *line[1], 1, color=generic_color, batch=batch))
+
+    for arc in laser['restrictions']["arcs"]:
+        sprites.append(
+            shapes.Arc(x=arc[0], y=arc[1], radius=arc[2], angle=arc[3], start_angle=arc[4], color=generic_color,
+                       batch=batch))
+
+
 def update(dt):
     sprites.clear()
 
@@ -131,11 +162,20 @@ def update(dt):
 
         for line in data["lines"]:
             sprites.append(shapes.Line(*line[0], *line[1], 1, color=color, batch=batch))
-            # sprites.append(shapes.Line(*line[0], *line[1], 3, color=line[2], batch=batch))
 
         for circle in data["circles"]:
-            # sprites.append(shapes.Arc(circle[0][0], circle[0][1], circle[1], color=circle[2], batch=batch))
             sprites.append(shapes.Arc(circle[0][0], circle[0][1], circle[1], color=color, batch=batch))
+
+        for arc in data["arcs"]:
+            sprites.append(shapes.Arc(x=arc[0], y=arc[1], radius=arc[2], angle=arc[3], start_angle=arc[4], color=color,
+                                      batch=batch))
+
+        draw_ll(
+            data['laser'], generic_color=(124, 252, 0, 125), touch_color=(0, 100, 0), restriction_color=(0, 255, 127)
+        )
+        draw_ll(
+            data['locator'], generic_color=(221, 160, 221), touch_color=(139, 0, 139), restriction_color=(238, 0, 238)
+        )
 
     space.step(dt)
 
