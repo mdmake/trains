@@ -7,6 +7,16 @@ from game.navigation import NavigationSystem
 EPS = 1e-5
 
 
+class RPoint:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    @property
+    def point(self):
+        return self.x, self.y
+
+
 def test_creation():
     config = {
         "v_max": 20,  # максимальная скорость
@@ -14,6 +24,7 @@ def test_creation():
     }
     navigation = NavigationSystem(0, 0, 0, config)
     assert navigation is not None
+
 
 def test_config_invalid():
     config = {}
@@ -43,26 +54,30 @@ def test_config_invalid():
         assert True
 
 
-
-
 def test_step_zero_without_collision():
     config = {
         "v_max": 10,  # максимальная скорость
         "max_angle_speed": radians(10),  # максимальная угловая скорость
     }
 
-    methods = [lambda crd0, crd1, **kwargs: None, lambda crd0, crd1, **kwargs: crd1]
-    responses = [False, True]
+    methods = [
+        lambda crd0, crd1, **kwargs: None,
+        lambda crd0, crd1, **kwargs: RPoint(*crd1),
+        lambda crd0, crd1, **kwargs: RPoint(*crd1),
+    ]
+    responses = [False, False, True]
 
-    for method, responce in zip(methods, responses):
+    vel = [10, 0, 10]
+
+    for method, responce, v in zip(methods, responses, vel):
         navigation = NavigationSystem(0, 0, 0, config)
         navigation.set_measurement_method(method)
 
-        navigation.receive({"v": 0, 'alpha': radians(0)})
+        navigation.receive({"v": v, 'alpha': radians(0)})
         navigation.step()
         state = navigation.send()
 
-        assert abs(state['x'] - 0.0) < EPS
+        assert abs(state['x'] - v) < EPS
         assert abs(state['y'] - 0.0) < EPS
         assert abs(state['alpha'] - 0.0) < EPS
         assert state['collision'] is responce
@@ -76,7 +91,7 @@ def test_movements_math():
 
     # нет коллизии
 
-    methods = [lambda crd0, crd1, **kwargs: None, lambda crd0, crd1, **kwargs: crd1]
+    methods = [lambda crd0, crd1, **kwargs: None, lambda crd0, crd1, **kwargs: RPoint(*crd1)]
     responces = [False, True]
     velosites = [0, 5, 10, 15]
     alphas = [0, radians(5), radians(-5), radians(-90), radians(90), radians(180)]
@@ -99,4 +114,7 @@ def test_movements_math():
                     assert abs(state['alpha'] - correct_alpha) < EPS
                     assert abs(state['x'] - correct_x) < EPS
                     assert abs(state['y'] - correct_y) < EPS
-                    assert state['collision'] is responce
+                    if velocity > EPS:
+                        assert state['collision'] is responce
+                    else:
+                        assert state['collision'] is False

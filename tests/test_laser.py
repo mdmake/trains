@@ -97,5 +97,5 @@ def test_laser_step_math_test():
     alpha = degrees(ans["alpha"]["value"])
 
     assert abs(ans["alpha"]["value"] - query["turn"]) < EPS
-    assert abs(ans["distance"]["x"] - 5.0) < EPS
-    assert abs(ans["distance"]["y"] - 0.0) < EPS
+    assert abs(ans["distance"][0]["x"] - 5.0) < EPS
+    assert abs(ans["distance"][0]["y"] - 0.0) < EPS

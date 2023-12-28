@@ -95,7 +95,7 @@ class NavigationSystem(TrainSystem):
         y = self.y + v * sin(alpha)
 
         result = self.method((self.x, self.y), (x, y), **self.method_kwargs)
-        if result:
+        if self._new_v > EPS and result:
             x, y = result.point
             return x, y, alpha, True
         return x, y, alpha, False
@@ -105,8 +105,8 @@ class NavigationSystem(TrainSystem):
         self._new_v = query["v"]
 
     def step(self):
-        if self._new_v > EPS:
-            self.x, self.y, self.alpha, self.collision = self.step_restriction()
+
+        self.x, self.y, self.alpha, self.collision = self.step_restriction()
         self._new_v = 0.0
         self._new_alpha = 0.0
 
