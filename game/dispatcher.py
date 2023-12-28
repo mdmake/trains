@@ -7,42 +7,42 @@ from game.sightingsystem import Laser
 from game.sightingsystem import Locator
 from game.train import Train
 
-place = [5, 15]
-
-full_train_config = {
-    "tth": {
-        "v_max": 20,
-        "max_angle_speed": 5,
-    },
-    "private": {"place": place},
-}
-
-full_laser_config = {
-    "min_range": 0,
-    "max_range": 300,
-    "max_angle_speed": radians(5),
-    "cone_opening_angle": radians(120),
-    "zero": radians(10),
-    "place": place,
-    "fire_power": 100,
-    "fire_time_limit": 5,
-    "max_angle_speed_tracking": radians(4),
-}
-
-full_locator_config = {
-    "min_range": 5,
-    "max_range": 150,
-    "max_angle_speed": radians(5),
-    "cone_opening_angle": radians(120),
-    "zero": radians(0),
-    "place": place,
-    "ray_count": 11,
-    "ray_step": radians(5),
-}
-
 
 class TPlayer:
     def __init__(self, method, method_kwargs):
+        place = [5, 15]
+
+        full_train_config = {
+            "tth": {
+                "v_max": 20,
+                "max_angle_speed": 5,
+            },
+            "private": {"place": place},
+        }
+
+        full_laser_config = {
+            "min_range": 0,
+            "max_range": 300,
+            "max_angle_speed": radians(5),
+            "cone_opening_angle": radians(120),
+            "zero": radians(10),
+            "place": place,
+            "fire_power": 100,
+            "fire_time_limit": 5,
+            "max_angle_speed_tracking": radians(4),
+        }
+
+        full_locator_config = {
+            "min_range": 5,
+            "max_range": 150,
+            "max_angle_speed": radians(5),
+            "cone_opening_angle": radians(120),
+            "zero": radians(0),
+            "place": place,
+            "ray_count": 11,
+            "ray_step": radians(5),
+        }
+
         self.navigation = NavigationSystem(
             x=700, y=400, alpha=radians(0), config=full_train_config["tth"]
         )
@@ -98,13 +98,13 @@ class TPlayer:
 
 class Player:
     def __init__(
-            self,
-            *,
-            space: pymunk.Space,
-            position: tuple[float],
-            angle: float,
-            name: str = "Unknown Train",
-            color: tuple[int] = (0, 0, 255)
+        self,
+        *,
+        space: pymunk.Space,
+        position: tuple[float],
+        angle: float,
+        name: str = "Unknown Train",
+        color: tuple[int] = (0, 0, 255)
     ):
         self.space = space
 
@@ -136,9 +136,9 @@ class Player:
 
     def prepare_laser_lines(self, vs: Laser | Locator, vs_data: dict):
         laser_lines = {}
-        laser_lines['restrictions'] = {}
-        laser_lines['restrictions']['lines'] = []
-        laser_lines['restrictions']['arcs'] = []
+        laser_lines["restrictions"] = {}
+        laser_lines["restrictions"]["lines"] = []
+        laser_lines["restrictions"]["arcs"] = []
 
         left_res = vs.ship_alpha + vs.shift_alpha + vs.cone_opening_angle_left
         right_res = vs.ship_alpha + vs.shift_alpha + vs.cone_opening_angle_right
@@ -146,36 +146,43 @@ class Player:
         laser_res_x = vs.x + vs.max_range * cos(left_res)
         laser_res_y = vs.y + vs.max_range * sin(left_res)
 
-        laser_lines['restrictions']['lines'].append(
-            ((vs.x, vs.y), (laser_res_x, laser_res_y)))
+        laser_lines["restrictions"]["lines"].append(
+            ((vs.x, vs.y), (laser_res_x, laser_res_y))
+        )
 
         laser_res_x = vs.x + vs.max_range * cos(right_res)
         laser_res_y = vs.y + vs.max_range * sin(right_res)
 
-        laser_lines['restrictions']['lines'].append(
+        laser_lines["restrictions"]["lines"].append(
             ((vs.x, vs.y), (laser_res_x, laser_res_y))
         )
 
-        laser_lines['restrictions']['arcs'].append(
+        laser_lines["restrictions"]["arcs"].append(
             (
                 vs.x,
                 vs.y,
                 vs.max_range,
                 2 * vs.cone_opening_angle_left,
                 right_res,
-            ))
+            )
+        )
 
-        laser_lines['ray'] = []
-        laser_lines['measurement'] = []
+        laser_lines["ray"] = []
+        laser_lines["measurement"] = []
         if "distance" in vs_data:
             for ray in vs_data["distance"]:
-                laser_lines['ray'].append((
-                    (vs.x, vs.y),
-                    (ray["x"], ray["y"],),)
+                laser_lines["ray"].append(
+                    (
+                        (vs.x, vs.y),
+                        (
+                            ray["x"],
+                            ray["y"],
+                        ),
+                    )
                 )
-                laser_lines['measurement'].append(ray['measurement'])
+                laser_lines["measurement"].append(ray["measurement"])
 
-        if 'alpha' in vs_data:
+        if "alpha" in vs_data:
             laser_lines["alpha_restriction"] = vs_data["alpha"]["restriction"]
         else:
             laser_lines["alpha_restriction"] = 0
@@ -194,8 +201,9 @@ class Player:
         arcs = []
 
         laser_lines = self.prepare_laser_lines(self.train.laser, self.train.from_laser)
-        locator_lines = self.prepare_laser_lines(self.train.locator, self.train.from_locator)
-
+        locator_lines = self.prepare_laser_lines(
+            self.train.locator, self.train.from_locator
+        )
 
         data = {
             "points": [
@@ -207,7 +215,6 @@ class Player:
             "arcs": arcs,
             "laser": laser_lines,
             "locator": locator_lines,
-
         }
 
         return data
