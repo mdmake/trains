@@ -153,14 +153,14 @@ class Laser(SightingSystem):
     def step(self):
         # обновляем собственные координаты в нск
         self.x = (
-                self.ship_x
-                + self.shift_x * cos(self.ship_alpha)
-                - self.shift_y * sin(self.ship_alpha)
+            self.ship_x
+            + self.shift_x * cos(self.ship_alpha)
+            - self.shift_y * sin(self.ship_alpha)
         )
         self.y = (
-                self.ship_y
-                + self.shift_x * sin(self.ship_alpha)
-                + self.shift_y * cos(self.ship_alpha)
+            self.ship_y
+            + self.shift_x * sin(self.ship_alpha)
+            + self.shift_y * cos(self.ship_alpha)
         )
 
         # обновляем собственный угол в нск:
@@ -172,7 +172,9 @@ class Laser(SightingSystem):
         if "turn" in self.query:
             restriction = None
 
-            self.ssk_alpha = remainder(self.query["turn"] - self.shift_alpha - self.ship_alpha, tau)
+            self.ssk_alpha = remainder(
+                self.query["turn"] - self.shift_alpha - self.ship_alpha, tau
+            )
 
             if self.ssk_alpha > self.cone_opening_angle_left:
                 self.ssk_alpha = self.cone_opening_angle_left
@@ -181,13 +183,15 @@ class Laser(SightingSystem):
                 self.ssk_alpha = self.cone_opening_angle_right
                 restriction = -1
 
-            self.alpha = remainder(self.ship_alpha + self.shift_alpha + self.ssk_alpha, tau)
+            self.alpha = remainder(
+                self.ship_alpha + self.shift_alpha + self.ssk_alpha, tau
+            )
 
             self.query_data["alpha"] = {}
             self.query_data["alpha"]["value"] = self.alpha
             self.query_data["alpha"]["restriction"] = restriction
 
-        if "distance" in self.query:
+        if self.query.get("distance", False):
             self.point_x = self.x + self.max_range * cos(self.alpha)
             self.point_y = self.y + self.max_range * sin(self.alpha)
 
@@ -217,7 +221,9 @@ class Laser(SightingSystem):
                 "value": distance,
             }
 
-            self.query_data["distance"] = [query_data, ]
+            self.query_data["distance"] = [
+                query_data,
+            ]
 
 
 class Locator(SightingSystem):
@@ -286,14 +292,14 @@ class Locator(SightingSystem):
     def step(self):
         # обновляем собственные координаты в нск
         self.x = (
-                self.ship_x
-                + self.shift_x * cos(self.ship_alpha)
-                - self.shift_y * sin(self.ship_alpha)
+            self.ship_x
+            + self.shift_x * cos(self.ship_alpha)
+            - self.shift_y * sin(self.ship_alpha)
         )
         self.y = (
-                self.ship_y
-                + self.shift_x * sin(self.ship_alpha)
-                + self.shift_y * cos(self.ship_alpha)
+            self.ship_y
+            + self.shift_x * sin(self.ship_alpha)
+            + self.shift_y * cos(self.ship_alpha)
         )
 
         # обновляем собственный угол в нск:
@@ -305,7 +311,9 @@ class Locator(SightingSystem):
         if "turn" in self.query:
             restriction = None
 
-            self.ssk_alpha = remainder(self.query["turn"] - self.shift_alpha - self.ship_alpha, tau)
+            self.ssk_alpha = remainder(
+                self.query["turn"] - self.shift_alpha - self.ship_alpha, tau
+            )
 
             if self.ssk_alpha > self.cone_opening_angle_left:
                 self.ssk_alpha = self.cone_opening_angle_left
@@ -314,26 +322,25 @@ class Locator(SightingSystem):
                 self.ssk_alpha = self.cone_opening_angle_right
                 restriction = -1
 
-            self.alpha = remainder(self.ship_alpha + self.shift_alpha + self.ssk_alpha, tau)
+            self.alpha = remainder(
+                self.ship_alpha + self.shift_alpha + self.ssk_alpha, tau
+            )
 
             self.query_data["alpha"] = {}
             self.query_data["alpha"]["value"] = self.alpha
             self.query_data["alpha"]["restriction"] = restriction
 
-        if "distance" in self.query:
+        if self.query.get("distance", False):
             self.query_data["distance"] = []
-
-            # self.point_x = self.x + self.max_range * cos(self.alpha)
-            # self.point_y = self.y + self.max_range * sin(self.alpha)
 
             begin_angle = self.ssk_alpha - (self.ray_count - 1) * self.ray_step / 2
 
             for ray_num in range(self.ray_count):
                 angle = (
-                        self.ship_alpha
-                        + self.shift_alpha
-                        + begin_angle
-                        + ray_num * self.ray_step
+                    self.ship_alpha
+                    + self.shift_alpha
+                    + begin_angle
+                    + ray_num * self.ray_step
                 )
                 distance = self.max_range
 
