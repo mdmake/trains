@@ -15,7 +15,7 @@ class TPlayer:
         full_train_config = {
             "tth": {
                 "v_max": 20,
-                "max_angle_speed": 5,
+                "max_angle_speed": radians(30),
             },
             "private": {"place": place},
         }
@@ -115,7 +115,7 @@ class Player:
         self.map = set()
 
         method = self.space.segment_query_first
-        method_kwargs = {"radius": 0.1, "shape_filter": pymunk.ShapeFilter()}
+        method_kwargs = {"radius": 0.01, "shape_filter": pymunk.ShapeFilter()}
         self.train = TPlayer(method, method_kwargs)
         self.create_shapes()
 
