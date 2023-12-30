@@ -32,9 +32,9 @@ sprites = []
 
 scene = Scene(space, 'configs/field.yaml')
 scene.set_scene()
-# scene.set_default_scene(space=space, width=width, height=height, margin=20)
 
 players = []
+keys = {}
 
 player = Player(
     space=space,
@@ -46,27 +46,6 @@ players.append(player)
 key_vector = {"x": 0.0, "y": 0.0, "alpha": 0.0}
 
 
-# bot = Player(
-#     space=space,
-#     position=(600., 600.),
-#     angle=-player_angle,
-#     name="bot",
-#     color=(0, 255, 0)
-# )
-#
-# players.append(bot)
-#
-# bot_2 = Player(
-#     space=space,
-#     position=(700, 200),
-#     angle=-player_angle + radians(30),
-#     name="bot_2",
-#     color=(255, 160, 0)
-# )
-#
-# players.append(bot_2)
-
-
 @window.event
 def on_draw():
     window.clear()
@@ -76,51 +55,46 @@ def on_draw():
 
 @window.event
 def on_key_press(symbol, modifiers):
-    step = 10
-    angle_step = 5
+    if not player.train.train.auto:
+        keys[symbol] = True
 
-    # if not player.train.auto:
-    #     if symbol == key.LEFT:
 
-    #         key_vector["x"] = -step
-    #     if symbol == key.RIGHT:
-    #         key_vector["x"] = step
-    #     if symbol == key.UP:
-    #         key_vector["y"] = step
-    #     if symbol == key.DOWN:
-    #         key_vector["y"] = -step
-    #     if symbol == key.Q:
-    #         key_vector["alpha"] = radians(angle_step)
-    #     if symbol == key.E:
-    #         key_vector["alpha"] = -radians(angle_step)
-    #
-    # if symbol == key.SPACE:
-    #     if player.train.auto:
-    #         for item in players:
-    #             item.train.v = 0.0
-    #             item.train.auto = False
-    #     else:
-    #         for item in players:
-    #             item.train.v = 5.0
-    #             item.train.auto = True
+def send_to_train():
+    key_vector = {}
+    if not player.train.train.auto:
+        if key.LEFT in keys:
+            key_vector["alpha"] = radians(5.0)
+        elif key.RIGHT in keys:
+            key_vector["alpha"] = - radians(5.0)
+
+        if key.UP in keys:
+            key_vector["v"] = +1
+        if key.DOWN in keys:
+            key_vector["v"] = -1
+
+        player.train.train.external(**key_vector)
 
 
 @window.event
 def on_key_release(symbol, modifiers):
-    # if not player.train.auto:
-    #     if symbol == key.LEFT or symbol == key.RIGHT:
-    #         key_vector["x"] = 0
-    #     if symbol == key.UP or symbol == key.DOWN:
-    #         key_vector["y"] = 0
-    #     if symbol == key.Q or symbol == key.E:
-    #         key_vector["alpha"] = 0
-    pass
+    if symbol in keys:
+        del keys[symbol]
+
+    if symbol == key.SPACE:
+        if player.train.train.auto:
+            for item in players:
+                item.train.train.auto = False
+                player.train.train.external(v=0)
+
+        else:
+            for item in players:
+                item.train.train.auto = True
 
 
 # object_count
 
 
-def draw_ll(laser, generic_color, touch_color, restriction_color):
+def draw_visir_lines_and_restrictions(laser, generic_color, touch_color, restriction_color):
     # нарисуем лазер
     for line in laser['restrictions']["lines"]:
         sprites.append(shapes.Line(*line[0], *line[1], 1, color=generic_color, batch=batch))
@@ -170,13 +144,13 @@ def update(dt):
             sprites.append(shapes.Arc(x=arc[0], y=arc[1], radius=arc[2], angle=arc[3], start_angle=arc[4], color=color,
                                       batch=batch))
 
-        draw_ll(
+        draw_visir_lines_and_restrictions(
             data['laser'], generic_color=(124, 252, 0, 125), touch_color=(0, 100, 0), restriction_color=(0, 255, 127)
         )
-        draw_ll(
+        draw_visir_lines_and_restrictions(
             data['locator'], generic_color=(221, 160, 221), touch_color=(139, 0, 139), restriction_color=(238, 0, 238)
         )
-
+    send_to_train()
     space.step(dt)
 
 

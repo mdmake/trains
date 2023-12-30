@@ -14,7 +14,7 @@ class Train(TrainSystem):
         self.alpha = None
         self.x = None
         self.y = None
-        self.v = None
+        self.v = 0
 
         self.name = name
         self.query_data = {}
@@ -30,6 +30,9 @@ class Train(TrainSystem):
 
         self.locator_alpha = 0
         self.laser_alpha = 0
+
+        self.auto = True
+        self.memory = None
 
     def _unpack_config(self, data: dict):
         self.config = data.copy()
@@ -61,19 +64,52 @@ class Train(TrainSystem):
         self.query = deepcopy(query)
 
     def step(self):
-        self.locator_alpha = remainder(self.locator_alpha + radians(5), tau)
-        self.laser_alpha = remainder(self.laser_alpha - radians(3), tau)
+        if self.auto:
+            self.locator_alpha = remainder(self.locator_alpha + radians(1), tau)
+            self.laser_alpha = remainder(self.laser_alpha - radians(1), tau)
 
-        self.alpha -= radians(1)
+            self.alpha = remainder(self.alpha - radians(5), tau)
+            self.v = 1
 
-        self.query_data = {"locator": {}}
-        self.query_data["locator"]["turn"] = self.locator_alpha
-        self.query_data["locator"]["distance"] = True
+            self.query_data = {"locator": {}}
+            self.query_data["locator"]["turn"] = self.locator_alpha
+            self.query_data["locator"]["distance"] = True
 
-        self.query_data["laser"] = {}
-        self.query_data["laser"]["turn"] = self.laser_alpha
-        self.query_data["laser"]["distance"] = True
+            self.query_data["laser"] = {}
+            self.query_data["laser"]["turn"] = self.laser_alpha
+            self.query_data["laser"]["distance"] = True
 
-        self.query_data["navigation"] = {}
-        self.query_data["navigation"]["v"] = 1
-        self.query_data["navigation"]["alpha"] = self.alpha
+            self.query_data["navigation"] = {}
+            self.query_data["navigation"]["v"] = self.v
+            self.query_data["navigation"]["alpha"] = self.alpha
+
+        else:
+            self.locator_alpha = remainder(self.locator_alpha + radians(1), tau)
+            self.laser_alpha = remainder(self.laser_alpha - radians(1), tau)
+
+            self.alpha = remainder(self.alpha + self.memory.get("delta_alpha", 0), tau)
+            self.v = max(self.v + self.memory.get("delta_v", 0), 0)
+
+            self.query_data = {"locator": {}}
+            self.query_data["locator"]["turn"] = self.locator_alpha
+            self.query_data["locator"]["distance"] = True
+
+            self.query_data["laser"] = {}
+            self.query_data["laser"]["turn"] = self.laser_alpha
+            self.query_data["laser"]["distance"] = True
+
+            self.query_data["navigation"] = {}
+            self.query_data["navigation"]["v"] = self.v
+            self.query_data["navigation"]["alpha"] = self.alpha
+
+            self.memory = {}
+
+    def external(self, **kwargs):
+        """
+        Эту функцию можно вызвать снаружи и положить в нее управление. После того как
+        управление будет отработано, self.memory надо почистить
+        """
+        self.memory = {
+            "delta_alpha": remainder(kwargs.get("alpha", 0), tau),
+            "delta_v": kwargs.get("v", 0),
+        }
