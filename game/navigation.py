@@ -115,15 +115,22 @@ class NavigationSystem(TrainSystem):
 
         alpha = remainder(alpha, tau)
 
-        x0 = self.x + 0.2 * cos(alpha)
-        y0 = self.y + 0.2 * sin(alpha)
+        x0 = self.x + 0.02 * cos(alpha)
+        y0 = self.y + 0.02 * sin(alpha)
 
         x1 = self.x + v * cos(alpha)
         y1 = self.y + v * sin(alpha)
 
         result = self.method((x0, y0), (x1, y1), **self.method_kwargs)
         if v > EPS and result:
+            print("collision")
             x, y = result.point
+
+            # идея - если мы сталкиваемся с чем-то
+            # сделав шаг - то мы не делаем этот шаг
+            x = x0
+            y = y0
+
             return x, y, alpha, v, True
         return x1, y1, alpha, v, False
 
