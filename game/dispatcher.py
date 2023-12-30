@@ -1,4 +1,5 @@
 from math import radians, cos, sin
+from typing import Callable
 
 import pymunk
 
@@ -9,7 +10,12 @@ from game.train import Train
 
 
 class TPlayer:
-    def __init__(self, init_x, init_y, init_alpha, method, method_kwargs):
+    def __init__(
+            self,
+            init_x: float | int, init_y: float | int,
+            init_alpha: float | int, method: Callable,
+            method_kwargs: dict
+    ):
         place = [5, 15]
 
         full_train_config = {
@@ -101,7 +107,7 @@ class Player:
             self,
             *,
             space: pymunk.Space,
-            position: tuple[float|int, float|int],
+            position: tuple[float | int, float | int],
             angle: float,
             name: str = "Unknown Train",
             color: tuple[int] = (0, 0, 255)
@@ -110,12 +116,13 @@ class Player:
 
         self.name = name
         self.color = color
+        self.train_shape = None
 
         self.map = set()
 
         method = self.space.segment_query_first
         method_kwargs = {"radius": 0.01, "shape_filter": pymunk.ShapeFilter()}
-        self.train = TPlayer(*position, angle, method, method_kwargs)
+        self.train = TPlayer(position[0], position[1], angle, method, method_kwargs)
         self.create_shapes()
 
     def create_shapes(self):
@@ -128,7 +135,6 @@ class Player:
         train_body.position = 0, 0
         train_body.sensor = False
 
-        # train_shape.sensor = True
         self.train_shape.color = (*self.color, 255)
         self.train_body = train_body
         self.space.add(self.train_body, self.train_shape)

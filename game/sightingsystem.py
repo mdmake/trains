@@ -135,7 +135,7 @@ class Laser(SightingSystem):
         self.cone_opening_angle_left = self.config["cone_opening_angle"]
         self.cone_opening_angle_right = -self.config["cone_opening_angle"]
 
-    def _load_config(self, filename):
+    def _load_config(self, filename: str):
         with open(filename, "r") as f:
             self.config = yaml.safe_load(f)["laser"]
 
@@ -274,7 +274,7 @@ class Locator(SightingSystem):
         self.cone_opening_angle_right = -self.config["cone_opening_angle"]
         self.ray_step = self.config["ray_step"]
 
-    def _load_config(self, filename):
+    def _load_config(self, filename: str):
         with open(filename, "r") as f:
             self.config = yaml.safe_load(f)["locator"]
 

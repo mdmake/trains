@@ -39,7 +39,7 @@ class Train(TrainSystem):
 
         self.max_angle_speed = self.config["tth"]["max_angle_speed"]
 
-    def _load_config(self, filename):
+    def _load_config(self, filename: str):
         with open(filename, "r") as f:
             self.config = yaml.safe_load(f)["train"]
 
@@ -57,7 +57,7 @@ class Train(TrainSystem):
         self.y = y
         self.alpha = alpha
 
-    def send(self):
+    def send(self) -> dict:
         return self.query_data
 
     def receive(self, query: dict):
@@ -104,7 +104,7 @@ class Train(TrainSystem):
 
             self.memory = {}
 
-    def external(self, **kwargs):
+    def external(self, **kwargs: dict):
         """
         Эту функцию можно вызвать снаружи и положить в нее управление. После того как
         управление будет отработано, self.memory надо почистить

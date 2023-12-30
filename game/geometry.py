@@ -1,10 +1,10 @@
-import numpy as np
-from configs.settings import MIN_MARGIN, EPS, MAX_DISTANCE
 import uuid
+from copy import deepcopy
 from typing import Optional
 
-from copy import deepcopy
-from typing import List
+import numpy as np
+
+from configs.settings import MIN_MARGIN, EPS
 
 
 class Geometry:
@@ -160,6 +160,3 @@ if __name__ == '__main__':
     data = np.array([[-5, 5], [4, -3], [6, 2], [-5, -2.5]]) - [[0, 0]]
     list_data = data.tolist()
     rest = Restangle(list_data)
-
-
-
