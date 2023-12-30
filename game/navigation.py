@@ -123,7 +123,6 @@ class NavigationSystem(TrainSystem):
 
         result = self.method((x0, y0), (x1, y1), **self.method_kwargs)
         if v > EPS and result:
-            print("collision")
             x, y = result.point
 
             # идея - если мы сталкиваемся с чем-то
