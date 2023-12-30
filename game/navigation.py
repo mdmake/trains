@@ -127,8 +127,8 @@ class NavigationSystem(TrainSystem):
 
             # идея - если мы сталкиваемся с чем-то
             # сделав шаг - то мы не делаем этот шаг
-            x = x0
-            y = y0
+            x = self.x
+            y = self.y
 
             return x, y, alpha, v, True
         return x1, y1, alpha, v, False

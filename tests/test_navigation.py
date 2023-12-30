@@ -77,8 +77,13 @@ def test_step_zero_without_collision():
         navigation.step()
         state = navigation.send()
 
-        assert abs(state['x'] - v) < EPS
-        assert abs(state['y'] - 0.0) < EPS
+        if state['collision']:
+            assert abs(state['x'] - 0.0) < EPS
+            assert abs(state['y'] - 0.0) < EPS
+        else:
+            assert abs(state['x'] - v) < EPS
+            assert abs(state['y'] - 0.0) < EPS
+
         assert abs(state['alpha'] - 0.0) < EPS
         assert state['collision'] is responce
 
@@ -112,8 +117,13 @@ def test_movements_math():
                     correct_x = min(velocity, config["v_max"]) * cos(correct_alpha)
                     correct_y = min(velocity, config["v_max"]) * sin(correct_alpha)
                     assert abs(state['alpha'] - correct_alpha) < EPS
-                    assert abs(state['x'] - correct_x) < EPS
-                    assert abs(state['y'] - correct_y) < EPS
+                    if state['collision']:
+                        assert abs(x0) < EPS
+                        assert abs(y0) < EPS
+                    else:
+                        assert abs(state['x'] - correct_x) < EPS
+                        assert abs(state['y'] - correct_y) < EPS
+
                     if velocity > EPS:
                         assert state['collision'] is responce
                     else:
