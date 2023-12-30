@@ -1,10 +1,10 @@
-from math import sin, cos, radians
+from math import sin, cos, radians, remainder, tau, sqrt
 from typing import Callable
 
 import yaml
 
 from game.exceptions import ConfigError
-from game.mathfunction import sign
+from game.mathfunction import sign, clamp
 from game.trainsystem import TrainSystem
 
 EPS = 1e-5
@@ -18,11 +18,15 @@ class NavigationSystem(TrainSystem):
     Класс получает на вход управление в виде вектора желаемого передвижения за этот такт (`v`, `alpha`) и
     выдает новое местоположение основываясь на наличии или отсутствии препятствий и
     ограничений на скорость и угловую скорость
+
+    Скорость приводится к диапазону [0 .. max_v]
+    Углы приводятся к диапазону [-pi .. pi]
     """
 
     def __init__(
-        self, x: float | int, y: float | int, alpha: float | int, config: str | dict
+            self, x: float | int, y: float | int, alpha: float | int, config: str | dict
     ):
+        self.v = 0
         self.x = x
         self.y = y
         self.alpha = alpha
@@ -81,36 +85,74 @@ class NavigationSystem(TrainSystem):
         self.method = method
         self.method_kwargs = kwargs
 
-    def step_restriction(self) -> tuple[float, float, float, bool]:
+    def step_restriction(self) -> tuple[float, float, float, float, bool]:
         """
         Проверка возможности перемещения на новою позицию
         """
 
-        v = min(self._new_v, self.v_max)
-        alpha = self.alpha + sign(self._new_alpha) * min(
-            abs(self._new_alpha - self.alpha), self.max_angle_speed
-        )
+        # ограничиваем v диапазоном [0, .. self.v_max]
+        v = clamp(0.0, self._new_v, self.v_max)
+        # ограничиваем alpha диапазоном [-pi, .. pi]
+        new_alpha = remainder(self._new_alpha, tau)
 
-        x = self.x + v * cos(alpha)
-        y = self.y + v * sin(alpha)
+        if new_alpha * self.alpha > 0:
+            alpha = self.alpha + sign(new_alpha - self.alpha) * min(
+                abs(new_alpha - self.alpha), self.max_angle_speed
+            )
+        else:
+            delta = min(
+                abs(new_alpha) + abs(self.alpha),
+                tau - abs(new_alpha) - abs(self.alpha),
+                self.max_angle_speed,
+            )
 
-        result = self.method((self.x, self.y), (x, y), **self.method_kwargs)
-        if self._new_v > EPS and result:
+            # выбираем направление кратчайшего доворота:
+            if abs(new_alpha) + abs(self.alpha) < tau - abs(new_alpha) - abs(self.alpha):
+                signum = sign(self.alpha) if self.alpha != 0 else sign(-new_alpha)
+                alpha = self.alpha - signum * delta
+            else:
+                alpha = self.alpha + sign(self.alpha) * delta
+
+        alpha = remainder(alpha, tau)
+
+        x0 = self.x + 0.2 * cos(alpha)
+        y0 = self.y + 0.2 * sin(alpha)
+
+        x1 = self.x + v * cos(alpha)
+        y1 = self.y + v * sin(alpha)
+
+        result = self.method((x0, y0), (x1, y1), **self.method_kwargs)
+        if v > EPS and result:
             x, y = result.point
-            return x, y, alpha, True
-        return x, y, alpha, False
+            return x, y, alpha, v, True
+        return x1, y1, alpha, v, False
 
     def receive(self, query: dict):
-        self._new_alpha = query["alpha"]
-        self._new_v = query["v"]
+        """
+        Получение данных.
+        Получаем управляющие сигналы - скорость и угол.
+        """
+        self._new_alpha = query.get("alpha", self.alpha)
+        self._new_v = query.get("v", self.v)
 
     def step(self):
-
-        self.x, self.y, self.alpha, self.collision = self.step_restriction()
+        """
+        Каждый шаг ограничиваем скорость и угол диапазоном и проверяем,
+        можем ли мы шагнуть в этом направлении
+        :return:
+        """
+        self.x, self.y, self.alpha, self.v, self.collision = self.step_restriction()
         self._new_v = 0.0
         self._new_alpha = 0.0
 
     def send(self) -> dict:
+        """
+        Посылка данных:
+
+        x, y - собственные координаты в глобальной системе координат
+        alpha - угол поворота в диапазоне [-pi .. pi]
+        collision - произошло ли столкновение с препятствием на этом шаге
+        """
         return {
             "x": self.x,
             "y": self.y,
