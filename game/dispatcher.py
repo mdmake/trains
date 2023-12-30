@@ -9,7 +9,7 @@ from game.train import Train
 
 
 class TPlayer:
-    def __init__(self, method, method_kwargs):
+    def __init__(self, init_x, init_y, init_alpha, method, method_kwargs):
         place = [5, 15]
 
         full_train_config = {
@@ -44,7 +44,7 @@ class TPlayer:
         }
 
         self.navigation = NavigationSystem(
-            x=700, y=400, alpha=radians(0), config=full_train_config["tth"]
+            x=init_x, y=init_y, alpha=init_alpha, config=full_train_config["tth"]
         )
         self.navigation.set_measurement_method(method, **method_kwargs)
 
@@ -98,17 +98,16 @@ class TPlayer:
 
 class Player:
     def __init__(
-        self,
-        *,
-        space: pymunk.Space,
-        position: tuple[float],
-        angle: float,
-        name: str = "Unknown Train",
-        color: tuple[int] = (0, 0, 255)
+            self,
+            *,
+            space: pymunk.Space,
+            position: tuple[float|int, float|int],
+            angle: float,
+            name: str = "Unknown Train",
+            color: tuple[int] = (0, 0, 255)
     ):
         self.space = space
 
-        self.v_max = 10
         self.name = name
         self.color = color
 
@@ -116,7 +115,7 @@ class Player:
 
         method = self.space.segment_query_first
         method_kwargs = {"radius": 0.01, "shape_filter": pymunk.ShapeFilter()}
-        self.train = TPlayer(method, method_kwargs)
+        self.train = TPlayer(*position, angle, method, method_kwargs)
         self.create_shapes()
 
     def create_shapes(self):
@@ -125,8 +124,8 @@ class Player:
         )
         train_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
         self.train_shape.body = train_body
-        train_body.angle = self.train.navigation.alpha
-        train_body.position = self.train.navigation.x, self.train.navigation.y
+        train_body.angle = 0
+        train_body.position = 0, 0
         train_body.sensor = False
 
         # train_shape.sensor = True
@@ -193,9 +192,6 @@ class Player:
         # запрашиваем локатор
 
         self.train.step()
-
-        self.train_body.angle = self.train.navigation.alpha - radians(90)
-        self.train_body.position = self.train.navigation.x, self.train.navigation.y
 
         lines = []
         arcs = []

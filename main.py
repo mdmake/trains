@@ -68,9 +68,9 @@ def send_to_train():
             key_vector["alpha"] = - radians(5.0)
 
         if key.UP in keys:
-            key_vector["v"] = +1
+            key_vector["v"] = +2
         if key.DOWN in keys:
-            key_vector["v"] = -1
+            key_vector["v"] = -2
 
         player.train.train.external(**key_vector)
 
@@ -108,6 +108,7 @@ def draw_visir_lines_and_restrictions(laser, generic_color, touch_color, restric
 
         if measurement:
             color = touch_color
+            sprites.append(shapes.Circle(ray[1][0], ray[1][1], 3, color=touch_color, batch=batch))
         elif laser["alpha_restriction"]:
             color = restriction_color
         else:
@@ -124,12 +125,17 @@ def draw_visir_lines_and_restrictions(laser, generic_color, touch_color, restric
 
 
 def update(dt):
+    send_to_train()
     sprites.clear()
-
     for item in players:
 
         data = item.step()
         color = (200, 0, 0)
+
+        sprites.append(
+            shapes.Circle(item.train.from_navigation["x"], item.train.from_navigation["y"], 3, color=(200, 0, 200),
+                          batch=batch))
+
         # отрисуем точки касания
         for touch_point in list(data['points']):
             sprites.append(shapes.Circle(touch_point[0], touch_point[1], 3, color=item.color, batch=batch))
@@ -150,7 +156,10 @@ def update(dt):
         draw_visir_lines_and_restrictions(
             data['locator'], generic_color=(221, 160, 221), touch_color=(139, 0, 139), restriction_color=(238, 0, 238)
         )
-    send_to_train()
+
+        item.train_body.angle = item.train.from_navigation["alpha"] - radians(90)
+        item.train_body.position = item.train.from_navigation["x"], item.train.from_navigation["y"]
+
     space.step(dt)
 
 
