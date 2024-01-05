@@ -7,8 +7,11 @@ from game.train import Train
 place = [5, 15]
 
 full_train_config = {
-    "tth": {"v_max": 20, "max_angle_speed": 5, },
-    "private": {"place": place}
+    "tth": {
+        "v_max": 20,
+        "max_angle_speed": 5,
+    },
+    "private": {"place": place},
 }
 
 full_laser_config = {
@@ -39,7 +42,9 @@ method = lambda crd0, crd1, **kwargs: None
 
 class Player:
     def __init__(self):
-        self.navigation = NavigationSystem(x=0, y=0, alpha=0, config=full_train_config['tth'])
+        self.navigation = NavigationSystem(
+            x=0, y=0, alpha=0, config=full_train_config["tth"]
+        )
         self.navigation.set_measurement_method(method)
 
         self.laser = Laser("test_laser", full_laser_config)
@@ -53,7 +58,7 @@ class Player:
         self.to_laser = {}
         self.to_locator = {}
         self.to_train = {}
-        self.to_navigation = {"v": 0, 'alpha': radians(0)}
+        self.to_navigation = {"v": 0, "alpha": radians(0)}
 
         self.from_laser = {}
         self.from_locator = {}
@@ -77,17 +82,17 @@ class Player:
         self.locator.step()
         self.from_locator = self.locator.send()
 
-        self.to_train['laser'] = self.from_laser
-        self.to_train['locator'] = self.from_locator
+        self.to_train["laser"] = self.from_laser
+        self.to_train["locator"] = self.from_locator
 
         self.train.update_navigation(**self.from_navigation)
         self.train.receive(self.to_train)
         self.train.step()
         self.from_train = self.train.send()
 
-        self.to_navigation = self.from_train['navigation']
-        self.to_locator = self.from_train['locator']
-        self.to_laser = self.from_train['laser']
+        self.to_navigation = self.from_train["navigation"]
+        self.to_locator = self.from_train["locator"]
+        self.to_laser = self.from_train["laser"]
 
 
 def test_system_creation():

@@ -73,30 +73,39 @@ def test_step_zero_without_collision():
         navigation = NavigationSystem(0, 0, 0, config)
         navigation.set_measurement_method(method)
 
-        navigation.receive({"v": v, 'alpha': radians(0)})
+        navigation.receive({"v": v, "alpha": radians(0)})
         navigation.step()
         state = navigation.send()
 
-        if state['collision']:
-            assert abs(state['x'] - 0.0) < EPS
-            assert abs(state['y'] - 0.0) < EPS
+        if state["collision"]:
+            assert abs(state["x"] - 0.0) < EPS
+            assert abs(state["y"] - 0.0) < EPS
         else:
-            assert abs(state['x'] - v) < EPS
-            assert abs(state['y'] - 0.0) < EPS
+            assert abs(state["x"] - v) < EPS
+            assert abs(state["y"] - 0.0) < EPS
 
-        assert abs(state['alpha'] - 0.0) < EPS
-        assert state['collision'] is responce
+        assert abs(state["alpha"] - 0.0) < EPS
+        assert state["collision"] is responce
 
 
 def test_movements_math():
     configs = [
-        {"v_max": 10, "max_angle_speed": radians(10), },
-        {"v_max": 1000, "max_angle_speed": radians(360), },
+        {
+            "v_max": 10,
+            "max_angle_speed": radians(10),
+        },
+        {
+            "v_max": 1000,
+            "max_angle_speed": radians(360),
+        },
     ]
 
     # нет коллизии
 
-    methods = [lambda crd0, crd1, **kwargs: None, lambda crd0, crd1, **kwargs: RPoint(*crd1)]
+    methods = [
+        lambda crd0, crd1, **kwargs: None,
+        lambda crd0, crd1, **kwargs: RPoint(*crd1),
+    ]
     responces = [False, True]
     velosites = [0, 5, 10, 15]
     alphas = [0, radians(5), radians(-5), radians(-90), radians(90), radians(180)]
@@ -106,25 +115,29 @@ def test_movements_math():
         for method, responce in zip(methods, responces):
             for velocity in velosites:
                 for alpha in alphas:
-                    navigation = NavigationSystem(x=x0, y=y0, alpha=alpha0, config=config)
+                    navigation = NavigationSystem(
+                        x=x0, y=y0, alpha=alpha0, config=config
+                    )
                     navigation.set_measurement_method(method)
 
-                    navigation.receive({"v": velocity, 'alpha': alpha})
+                    navigation.receive({"v": velocity, "alpha": alpha})
                     navigation.step()
                     state = navigation.send()
 
-                    correct_alpha = sign(state['alpha']) * min(abs(alpha - alpha0), config["max_angle_speed"])
+                    correct_alpha = sign(state["alpha"]) * min(
+                        abs(alpha - alpha0), config["max_angle_speed"]
+                    )
                     correct_x = min(velocity, config["v_max"]) * cos(correct_alpha)
                     correct_y = min(velocity, config["v_max"]) * sin(correct_alpha)
-                    assert abs(state['alpha'] - correct_alpha) < EPS
-                    if state['collision']:
+                    assert abs(state["alpha"] - correct_alpha) < EPS
+                    if state["collision"]:
                         assert abs(x0) < EPS
                         assert abs(y0) < EPS
                     else:
-                        assert abs(state['x'] - correct_x) < EPS
-                        assert abs(state['y'] - correct_y) < EPS
+                        assert abs(state["x"] - correct_x) < EPS
+                        assert abs(state["y"] - correct_y) < EPS
 
                     if velocity > EPS:
-                        assert state['collision'] is responce
+                        assert state["collision"] is responce
                     else:
-                        assert state['collision'] is False
+                        assert state["collision"] is False

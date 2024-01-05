@@ -24,7 +24,7 @@ class NavigationSystem(TrainSystem):
     """
 
     def __init__(
-            self, x: float | int, y: float | int, alpha: float | int, config: str | dict
+        self, x: float | int, y: float | int, alpha: float | int, config: str | dict
     ):
         self.v = 0
         self.x = x
@@ -107,7 +107,9 @@ class NavigationSystem(TrainSystem):
             )
 
             # выбираем направление кратчайшего доворота:
-            if abs(new_alpha) + abs(self.alpha) < tau - abs(new_alpha) - abs(self.alpha):
+            if abs(new_alpha) + abs(self.alpha) < tau - abs(new_alpha) - abs(
+                self.alpha
+            ):
                 signum = sign(self.alpha) if self.alpha != 0 else sign(-new_alpha)
                 alpha = self.alpha - signum * delta
             else:

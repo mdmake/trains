@@ -14,6 +14,8 @@ full_config = {
     "ray_count": 11,
     "ray_step": 6,
 }
+
+
 def measurement_method_no_collision(coord0, coord1, *args, **kwargs):
     return None
 
@@ -34,12 +36,11 @@ def test_create_locator_1():
 
 
 def test_create_locator_2():
-
     locator = Locator("test", full_config)
     assert locator
 
-def test_locator_step():
 
+def test_locator_step():
     laser = Locator("test", full_config)
     laser.set_measurement_method(measurement_method_no_collision)
     laser.update_navigation(0, 0, 0)
