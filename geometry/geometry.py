@@ -3,10 +3,16 @@ import numpy as np
 
 TOLERANCE = 3
 ANGLE_TOLERANCE = 0.2
+EPS = 1e-6
 
 
 class Geometry:
-    def __init__(self, color: tuple[int, int, int] = (0, 0, 0), object_type: str | None = None, **kwargs):
+    def __init__(
+        self,
+        color: tuple[int, int, int] = (0, 0, 0),
+        object_type: str | None = None,
+        **kwargs,
+    ):
         self.__color = color
         self.__square = 0
         self.__object_type = object_type
@@ -38,14 +44,14 @@ class Point(Geometry):
     """
 
     def __init__(self, x: float, y: float, color: tuple[int, int, int] = (0, 0, 255)):
-        super().__init__(color=color, object_type='point')
+        super().__init__(color=color, object_type="point")
         self.__x = x
         self.__y = y
 
-    def almost_eq(self, other: 'Point', tolerance=TOLERANCE):
+    def almost_eq(self, other: "Point", tolerance=TOLERANCE):
         return self.distance(other) <= tolerance
 
-    def __eq__(self, other: 'Point') -> bool:
+    def __eq__(self, other: "Point") -> bool:
         """
         Проверка совпадения точек по расстоянию между ними с некоторой погрешностью.
 
@@ -53,12 +59,12 @@ class Point(Geometry):
         :return: True, если расстояние между точками меньше некоторого значения, иначе - False.
         """
 
-        return self.distance(other) == 0
+        return self.distance(other) < EPS
 
     def __hash__(self):
         return hash((self.__x, self.__y))
 
-    def __add__(self, other: 'Point') -> 'Line':
+    def __add__(self, other: "Point") -> "Line":
         """
         Объединение двух точек (объекты класса Point) в прямую (объект класса Line). Например, line = point_1 + point_2.
 
@@ -68,12 +74,12 @@ class Point(Geometry):
         return Line(point0=self, point1=other)
 
     def __str__(self):
-        return f'Точка с координатами ({self.__x}, {self.__y})'
+        return f"Точка с координатами ({self.__x}, {self.__y})"
 
     def __repr__(self):
-        return f'Point({self.__x, self.__y})'
+        return f"Point({self.__x, self.__y})"
 
-    def __contains__(self, points: list['Point']) -> bool:
+    def __contains__(self, points: list["Point"]) -> bool:
         """
         Проверка наличия точки в списке точек.
 
@@ -119,7 +125,7 @@ class Point(Geometry):
         """
         return self.__x, self.__y
 
-    def distance(self, other: 'Point') -> float:
+    def distance(self, other: "Point") -> float:
         """
         Получение расстояния между точками.
 
@@ -129,7 +135,7 @@ class Point(Geometry):
 
         return math.sqrt((other.x - self.__x) ** 2 + (other.y - self.__y) ** 2)
 
-    def vector(self, other: 'Point') -> tuple[float, float]:
+    def vector(self, other: "Point") -> tuple[float, float]:
         """
         Получение вектора в виде кортежа двух координат в направлении от self к other.
         """
@@ -141,25 +147,28 @@ class Line(Geometry):
     Класс "Прямая".
     """
 
-    def __init__(self, point0: Point, point1: Point, color: tuple[int, int, int] = (255, 0, 0)):
+    def __init__(
+        self, point0: Point, point1: Point, color: tuple[int, int, int] = (255, 0, 0)
+    ):
         # if point0 == point1:
         #     raise Exception('Начало и конец прямой не должны совпадать!')
 
-        super().__init__(color=color, object_type='line')
+        super().__init__(color=color, object_type="line")
         self.__point0 = point0
         self.__point1 = point1
 
-    def __eq__(self, other: 'Line'):
+    def __eq__(self, other: "Line"):
         return self.line == other.line
 
     def __str__(self):
-        return f'Прямая, состоящая из точек ({self.point0.point}, {self.point1.point})'
+        return f"Прямая, состоящая из точек ({self.point0.point}, {self.point1.point})"
 
     def __repr__(self):
-        return f'Line(Point{self.__point0.point}, Point{self.point1.point})'
+        return f"Line(Point{self.__point0.point}, Point{self.point1.point})"
 
     def square(self):
-        raise Exception('У прямой не может быть площади!')
+        raise Exception("У прямой не может быть площади!")
+
     #
     # @property
     # def color(self):
@@ -191,9 +200,11 @@ class Line(Geometry):
         """
         Возвращает кортеж координат середины отрезка (координата X, координата Y).
         """
-        return Point((self.__point0.x + self.point1.x) / 2, (self.point0.y + self.point1.y) / 2)
+        return Point(
+            (self.__point0.x + self.point1.x) / 2, (self.point0.y + self.point1.y) / 2
+        )
 
-    def intersection(self, other: 'Line') -> Point | None:
+    def intersection(self, other: "Line") -> Point | None:
         """
         Вычисление точки пересечения двух прямых.
 
@@ -212,13 +223,16 @@ class Line(Geometry):
         if div == 0:
             return
 
-        d = (det(self.__point0.point, self.__point1.point), det(other.__point0.point, other.__point1.point))
+        d = (
+            det(self.__point0.point, self.__point1.point),
+            det(other.__point0.point, other.__point1.point),
+        )
         x = det(d, xdiff) / div
         y = det(d, ydiff) / div
 
         return Point(x, y)
 
-    def angle_between_lines(self, other: 'Line'):
+    def angle_between_lines(self, other: "Line"):
         """
         Вычисление угла между двумя прямыми.
 
@@ -226,17 +240,21 @@ class Line(Geometry):
         :return: Угол в радианах.
         """
 
-        alpha = math.atan2(self.__point1.y - self.__point0.y, self.__point1.x - self.__point0.x)
+        alpha = math.atan2(
+            self.__point1.y - self.__point0.y, self.__point1.x - self.__point0.x
+        )
         alpha = 2 * math.pi + alpha if alpha < 0 else alpha
 
-        beta = math.atan2(other.__point1.y - other.__point0.y, other.__point1.x - other.__point0.x)
+        beta = math.atan2(
+            other.__point1.y - other.__point0.y, other.__point1.x - other.__point0.x
+        )
         beta = 2 * math.pi + beta if beta < 0 else beta
 
         result = alpha - beta if alpha > beta else beta - alpha
 
         return result - math.pi if result - math.pi > ANGLE_TOLERANCE else result
 
-    def distance(self, other: 'Point' or 'Line') -> float:
+    def distance(self, other: "Point" or "Line") -> float:
         """
         Вычисление расстояния от прямой до точки/прямой.
 
@@ -249,15 +267,21 @@ class Line(Geometry):
 
         elif type(other) == Line:
             if self == other or self.intersection(other):
-                return .0
+                return 0.0
 
             point = other.__point0
         else:
-            raise TypeError(f'Неизвестный тип параметра other: {type(other)}')
+            raise TypeError(f"Неизвестный тип параметра other: {type(other)}")
 
-        up = (self.__point0.y - self.__point1.y) * point.x + (self.__point1.x - self.__point0.x) * point.y + \
-             (self.__point0.x * self.__point1.y - self.__point1.x * self.__point0.y)
-        down = math.sqrt((self.__point1.x - self.__point0.x) ** 2 + (self.__point1.y - self.__point0.y) ** 2)
+        up = (
+            (self.__point0.y - self.__point1.y) * point.x
+            + (self.__point1.x - self.__point0.x) * point.y
+            + (self.__point0.x * self.__point1.y - self.__point1.x * self.__point0.y)
+        )
+        down = math.sqrt(
+            (self.__point1.x - self.__point0.x) ** 2
+            + (self.__point1.y - self.__point0.y) ** 2
+        )
 
         return math.fabs(up / down)
 
@@ -272,19 +296,31 @@ class Line(Geometry):
         if not self.angle_between_lines(self.__point0 + point) < ANGLE_TOLERANCE:
             return False
 
-        if not math.pi - ANGLE_TOLERANCE < (point + self.__point0).angle_between_lines(point + self.__point1) < math.pi + ANGLE_TOLERANCE:
+        if (
+            not math.pi - ANGLE_TOLERANCE
+            < (point + self.__point0).angle_between_lines(point + self.__point1)
+            < math.pi + ANGLE_TOLERANCE
+        ):
             return False
 
         return True
 
-    def parallel(self, other: 'Line') -> bool:
-        return math.pi - ANGLE_TOLERANCE <= self.angle_between_lines(other) <= math.pi + ANGLE_TOLERANCE or\
-               self.angle_between_lines(other) <= ANGLE_TOLERANCE
+    def parallel(self, other: "Line") -> bool:
+        return (
+            math.pi - ANGLE_TOLERANCE
+            <= self.angle_between_lines(other)
+            <= math.pi + ANGLE_TOLERANCE
+            or self.angle_between_lines(other) <= ANGLE_TOLERANCE
+        )
 
-    def perpendicular(self, other: 'Line') -> bool:
-        return (math.pi / 2) - ANGLE_TOLERANCE <= self.angle_between_lines(other) <= (math.pi / 2) + ANGLE_TOLERANCE
+    def perpendicular(self, other: "Line") -> bool:
+        return (
+            (math.pi / 2) - ANGLE_TOLERANCE
+            <= self.angle_between_lines(other)
+            <= (math.pi / 2) + ANGLE_TOLERANCE
+        )
 
-    def combine_lines(self, other: 'Line') -> 'Line' or None:
+    def combine_lines(self, other: "Line") -> "Line" or None:
         """
         Объединение двух отрезков в один.
 
@@ -310,12 +346,16 @@ class Line(Geometry):
             return self
 
         if first_point_on_segment:
-            if other.__point1.distance(self.__point1) <= other.__point1.distance(self.__point0):
+            if other.__point1.distance(self.__point1) <= other.__point1.distance(
+                self.__point0
+            ):
                 return self.__point0 + other.__point1
             return self.__point1 + other.__point1
 
         elif second_point_on_segment:
-            if other.__point0.distance(self.__point1) <= other.__point0.distance(self.__point0):
+            if other.__point0.distance(self.__point1) <= other.__point0.distance(
+                self.__point0
+            ):
                 return self.__point0 + other.__point0
             return self.__point1 + other.__point0
 
@@ -327,8 +367,9 @@ class Line(Geometry):
         :return: True, если точка находится на прямой, иначе - False.
         """
 
-        cross = (point.x - self.__point0.x) * (self.__point1.y - self.__point0.y) - \
-                (point.y - self.__point0.y) * (self.__point1.x - self.__point0.x)
+        cross = (point.x - self.__point0.x) * (self.__point1.y - self.__point0.y) - (
+            point.y - self.__point0.y
+        ) * (self.__point1.x - self.__point0.x)
 
         return math.fabs(cross) < TOLERANCE
 
@@ -338,32 +379,40 @@ class StraightAngle(Geometry):
     Класс "Прямой угол"
     """
 
-    def __init__(self, point0: Point, vertex: Point, point1: Point, color: tuple[int, int, int] = (0, 255, 0)):
+    def __init__(
+        self,
+        point0: Point,
+        vertex: Point,
+        point1: Point,
+        color: tuple[int, int, int] = (0, 255, 0),
+    ):
         self.__point0 = point0
         self.__vertex = vertex
         self.__point1 = point1
 
         self.__sign = False
 
-        super().__init__(color=color, object_type='angle')
+        super().__init__(color=color, object_type="angle")
         self.set_color(color)
 
     def __hash__(self):
         return hash(self)
 
-    def __eq__(self, other: 'StraightAngle'):
-        return self.__point0 == other.__point0 and \
-               self.__vertex == other.__vertex and \
-               self.__point1 == other.__point1
+    def __eq__(self, other: "StraightAngle"):
+        return (
+            self.__point0 == other.__point0
+            and self.__vertex == other.__vertex
+            and self.__point1 == other.__point1
+        )
 
     def __str__(self):
-        return f'Прямой угол, состоящий из точек ({self.point0.point}, {self.__vertex.point},{self.point1.point})'
+        return f"Прямой угол, состоящий из точек ({self.point0.point}, {self.__vertex.point},{self.point1.point})"
 
     def __repr__(self):
-        return f'StraightAngle(Point{self.__point0.point}, Point{self.__vertex.point}, Point{self.__point1.point})'
+        return f"StraightAngle(Point{self.__point0.point}, Point{self.__vertex.point}, Point{self.__point1.point})"
 
     def square(self):
-        raise Exception('У прямого угла не может быть площади!')
+        raise Exception("У прямого угла не может быть площади!")
 
     def set_color(self, value: tuple[int, int, int]):
         """
@@ -412,9 +461,13 @@ class StraightAngle(Geometry):
         :return: None.
         """
 
-        intersection = (self.__point0 + self.__point1).intersection(train_position + self.__vertex)
+        intersection = (self.__point0 + self.__point1).intersection(
+            train_position + self.__vertex
+        )
 
-        if intersection.distance(train_position) > self.__vertex.distance(train_position):
+        if intersection.distance(train_position) > self.__vertex.distance(
+            train_position
+        ):
             # Угол прямоугольника
             self.__sign = True
         else:
@@ -427,8 +480,10 @@ class Circle(Geometry):
     Класс "Окружность"
     """
 
-    def __init__(self, center: Point, radius: float, color: tuple[int, int, int] = (0, 0, 0)):
-        super().__init__(color=color, object_type='circle')
+    def __init__(
+        self, center: Point, radius: float, color: tuple[int, int, int] = (0, 0, 0)
+    ):
+        super().__init__(color=color, object_type="circle")
 
         self.__center = center
         self.__radius = radius
@@ -437,10 +492,10 @@ class Circle(Geometry):
         self.set_color(color)
 
     def __str__(self):
-        return f'Окружность с центром O{self.__center.point} и радиусом R = {self.__radius})'
+        return f"Окружность с центром O{self.__center.point} и радиусом R = {self.__radius})"
 
     def __repr__(self):
-        return f'Circle(Point{self.__center.point}, {self.__radius})'
+        return f"Circle(Point{self.__center.point}, {self.__radius})"
 
     def __contains__(self, point: Point):
         """
@@ -455,7 +510,7 @@ class Circle(Geometry):
     def __hash__(self):
         return hash(self)
 
-    def __eq__(self, other: 'Circle'):
+    def __eq__(self, other: "Circle"):
         """
         Проверка эквивалентности окружностей.
 
@@ -463,8 +518,10 @@ class Circle(Geometry):
         :return: True, если окружности эквивалентны, иначе - False.
         """
 
-        return self.__center.distance(other.center) < TOLERANCE and \
-            math.fabs(self.__radius - other.__radius) < TOLERANCE
+        return (
+            self.__center.distance(other.center) < TOLERANCE
+            and math.fabs(self.__radius - other.__radius) < TOLERANCE
+        )
 
     def set_color(self, value: tuple[int, int, int]):
         """
@@ -478,7 +535,7 @@ class Circle(Geometry):
 
     @property
     def square(self):
-        return math.pi * self.__radius ** 2
+        return math.pi * self.__radius**2
 
     @property
     def points_on_it(self) -> list[Point]:
@@ -514,7 +571,9 @@ class Rectangle(Geometry):
     Класс "Прямоугольник".
     """
 
-    def __init__(self, vertices: list[Point], color=(0, 0, 0), object_type: str = 'rectangle'):
+    def __init__(
+        self, vertices: list[Point], color=(0, 0, 0), object_type: str = "rectangle"
+    ):
         super().__init__(color=color, object_type=object_type)
 
         self.__vertices: list[Point] = vertices
@@ -525,18 +584,22 @@ class Rectangle(Geometry):
         self.set_larger_rectangle(epsilon=10)
 
     def __str__(self):
-        return f'Прямоугольник с вершинами ' \
-               f'A{self.__vertices[0].point}, ' \
-               f'B{self.__vertices[1].point}, ' \
-               f'C{self.__vertices[2].point}, ' \
-               f'D{self.__vertices[3].point}'
+        return (
+            f"Прямоугольник с вершинами "
+            f"A{self.__vertices[0].point}, "
+            f"B{self.__vertices[1].point}, "
+            f"C{self.__vertices[2].point}, "
+            f"D{self.__vertices[3].point}"
+        )
 
     def __repr__(self):
-        return f'Rectangle([' \
-               f'Point{self.__vertices[0].point}, ' \
-               f'Point{self.__vertices[1].point}, ' \
-               f'Point{self.__vertices[2].point}, ' \
-               f'Point{self.__vertices[3].point}])'
+        return (
+            f"Rectangle(["
+            f"Point{self.__vertices[0].point}, "
+            f"Point{self.__vertices[1].point}, "
+            f"Point{self.__vertices[2].point}, "
+            f"Point{self.__vertices[3].point}])"
+        )
 
     def __contains__(self, point: Point):
         """
@@ -549,12 +612,16 @@ class Rectangle(Geometry):
         sign = None
 
         for i in range(4):
-            side_vector = np.array([
-                rectangle[(i + 1) % 4].x - rectangle[i].x,
-                rectangle[(i + 1) % 4].y - rectangle[i].y
-            ])
+            side_vector = np.array(
+                [
+                    rectangle[(i + 1) % 4].x - rectangle[i].x,
+                    rectangle[(i + 1) % 4].y - rectangle[i].y,
+                ]
+            )
 
-            to_point_vector = np.array([point.x - rectangle[i].x, point.y - rectangle[i].y])
+            to_point_vector = np.array(
+                [point.x - rectangle[i].x, point.y - rectangle[i].y]
+            )
             print(to_point_vector)
             if not sign:
                 sign = np.dot(side_vector, to_point_vector) < 0
@@ -563,7 +630,7 @@ class Rectangle(Geometry):
                     return False
         return True
 
-    def __eq__(self, other: 'Rectangle'):
+    def __eq__(self, other: "Rectangle"):
         return self == other
 
     @property
@@ -577,7 +644,7 @@ class Rectangle(Geometry):
         """
         return Point(
             sum(vertex.x for vertex in self.__vertices) / 4,
-            sum(vertex.y for vertex in self.__vertices) / 4
+            sum(vertex.y for vertex in self.__vertices) / 4,
         )
 
     @property
@@ -592,14 +659,19 @@ class Rectangle(Geometry):
         """
         Получение сторон прямоугольника.
         """
-        return [self.__vertices[(i + 1) % 4] + self.__vertices[i] for i in range(len(self.__vertices))]
+        return [
+            self.__vertices[(i + 1) % 4] + self.__vertices[i]
+            for i in range(len(self.__vertices))
+        ]
 
     @property
     def square(self) -> float:
         """
         Вычисление площади прямоугольника.
         """
-        return self.__vertices[0].distance(self.__vertices[1]) * self.__vertices[1].distance(self.__vertices[2])
+        return self.__vertices[0].distance(self.__vertices[1]) * self.__vertices[
+            1
+        ].distance(self.__vertices[2])
 
     def set_color(self, color) -> None:
         """
@@ -622,16 +694,19 @@ class Rectangle(Geometry):
         for i in range(len(self.__vertices)):
             artan0 = math.atan2(
                 self.__vertices[i].y - center_point.y,
-                self.__vertices[i].x - center_point.x
+                self.__vertices[i].x - center_point.x,
             )
 
             artan1 = math.atan2(
                 self.__vertices[(i + 1) % 4].y - center_point.y,
-                self.__vertices[(i + 1) % 4].x - center_point.x
+                self.__vertices[(i + 1) % 4].x - center_point.x,
             )
 
             if artan0 < artan1:
-                self.__vertices[i], self.__vertices[(i + 1) % 4] = self.__vertices[(i + 1) % 4], self.__vertices[i]
+                self.__vertices[i], self.__vertices[(i + 1) % 4] = (
+                    self.__vertices[(i + 1) % 4],
+                    self.__vertices[i],
+                )
 
     def set_larger_rectangle(self, epsilon: float = 0.5):
         """
@@ -643,10 +718,16 @@ class Rectangle(Geometry):
 
         if self.__larger_rectangle_vertices:
             for vertex in self.__vertices:
-                dx = epsilon * math.cos(math.atan2(vertex.y - center_point.y, vertex.x - center_point.x))
-                dy = epsilon * math.sin(math.atan2(vertex.y - center_point.y, vertex.x - center_point.x))
+                dx = epsilon * math.cos(
+                    math.atan2(vertex.y - center_point.y, vertex.x - center_point.x)
+                )
+                dy = epsilon * math.sin(
+                    math.atan2(vertex.y - center_point.y, vertex.x - center_point.x)
+                )
 
-                self.__larger_rectangle_vertices.append(Point(vertex.x + dx, vertex.y + dy))
+                self.__larger_rectangle_vertices.append(
+                    Point(vertex.x + dx, vertex.y + dy)
+                )
 
 
 class Border(Rectangle):
@@ -654,26 +735,35 @@ class Border(Rectangle):
     Класс "Граница".
     """
 
-    def __init__(self, vertices: list[Point], color: tuple[int, int, int] = (255, 0, 247)):
-        super().__init__(vertices=vertices, color=color, object_type='border')
+    def __init__(
+        self, vertices: list[Point], color: tuple[int, int, int] = (255, 0, 247)
+    ):
+        super().__init__(vertices=vertices, color=color, object_type="border")
 
     def __str__(self):
-        return f'Граница поля с вершинами ' \
-               f'A{self.__vertices[0].point}, ' \
-               f'B{self.__vertices[1].point}, ' \
-               f'C{self.__vertices[2].point}, ' \
-               f'D{self.__vertices[3].point}'
+        return (
+            f"Граница поля с вершинами "
+            f"A{self.__vertices[0].point}, "
+            f"B{self.__vertices[1].point}, "
+            f"C{self.__vertices[2].point}, "
+            f"D{self.__vertices[3].point}"
+        )
 
     def __repr__(self):
-        return f'Border([' \
-               f'Point{self.__vertices[0].point}, ' \
-               f'Point{self.__vertices[1].point}, ' \
-               f'Point{self.__vertices[2].point}, ' \
-               f'Point{self.__vertices[3].point}])'
+        return (
+            f"Border(["
+            f"Point{self.__vertices[0].point}, "
+            f"Point{self.__vertices[1].point}, "
+            f"Point{self.__vertices[2].point}, "
+            f"Point{self.__vertices[3].point}])"
+        )
 
     def __contains__(self, point):
         for vertex in self.vertices:
-            if math.fabs(point.x - vertex.x) < TOLERANCE or math.fabs(point.y - vertex.y) < TOLERANCE:
+            if (
+                math.fabs(point.x - vertex.x) < TOLERANCE
+                or math.fabs(point.y - vertex.y) < TOLERANCE
+            ):
                 return True
         return False
 
@@ -852,11 +942,14 @@ class Figures:
     def get_angle(self, local_points: list[Point], train_position: Point) -> bool:
         is_angle = False
 
-        if local_points[0].is_exist([local_points[1], local_points[2], local_points[3]]):
+        if local_points[0].is_exist(
+            [local_points[1], local_points[2], local_points[3]]
+        ):
             return is_angle
 
         distances = [
-            local_points[i].distance(local_points[i + 1]) for i in range(len(local_points) - 1)
+            local_points[i].distance(local_points[i + 1])
+            for i in range(len(local_points) - 1)
         ]
 
         for i in range(len(distances)):
@@ -867,19 +960,30 @@ class Figures:
 
         other_line = local_points[2] + local_points[3]
 
-        if 'k' in main_line.line_equation.keys() and 'k' in other_line.line_equation.keys():
+        if (
+            "k" in main_line.line_equation.keys()
+            and "k" in other_line.line_equation.keys()
+        ):
             equation1 = main_line.line_equation
             equation2 = other_line.line_equation
 
-            tangent = (equation2['k'] - equation1['k']) / (1 + equation2['k'] * equation1['k'])
+            tangent = (equation2["k"] - equation1["k"]) / (
+                1 + equation2["k"] * equation1["k"]
+            )
 
             if 1.5 < math.fabs(math.atan(tangent)) < 1.6:
                 is_angle = True
 
-        elif 'x' in main_line.line_equation.keys() and 'y' in other_line.line_equation.keys():
+        elif (
+            "x" in main_line.line_equation.keys()
+            and "y" in other_line.line_equation.keys()
+        ):
             is_angle = True
 
-        elif 'y' in main_line.line_equation.keys() and 'x' in other_line.line_equation.keys():
+        elif (
+            "y" in main_line.line_equation.keys()
+            and "x" in other_line.line_equation.keys()
+        ):
             is_angle = True
 
         if is_angle:
@@ -894,17 +998,21 @@ class Figures:
             if straight_angle.is_convex:
                 if not straight_angle.is_exist(self.__straight_angles):
                     self.__straight_angles.append(straight_angle)
-                    print(f'Выпуклый прямой угол!')
+                    print(f"Выпуклый прямой угол!")
                 else:
-                    print(f'Выпуклый прямой угол существует!')
+                    print(f"Выпуклый прямой угол существует!")
                     return False
             else:
-                if not self.__border and not straight_angle.is_exist(self.__field_boundary):
-                    print(f'Вогнутый прямой угол!')
+                if not self.__border and not straight_angle.is_exist(
+                    self.__field_boundary
+                ):
+                    print(f"Вогнутый прямой угол!")
                     self.__field_boundary.append(straight_angle)
                     self.get_field_boundaries()
                 else:
-                    print(f'Вогнутый прямой угол существует! {len(self.__field_boundary)}')
+                    print(
+                        f"Вогнутый прямой угол существует! {len(self.__field_boundary)}"
+                    )
                     return False
 
         return is_angle
@@ -919,13 +1027,20 @@ class Figures:
             if local_points[i].distance(local_points[i + 1]) > 50:
                 return is_circle
 
-        lines = [local_points[i] + local_points[j] for i in range(3) for j in range(i + 1, 4)]
+        lines = [
+            local_points[i] + local_points[j] for i in range(3) for j in range(i + 1, 4)
+        ]
 
-        if 'k' in lines[0].line_equation.keys() and 'k' in lines[-1].line_equation.keys():
+        if (
+            "k" in lines[0].line_equation.keys()
+            and "k" in lines[-1].line_equation.keys()
+        ):
             equation1 = lines[0].line_equation
             equation2 = lines[-1].line_equation
 
-            tangent = (equation2['k'] - equation1['k']) / (1 + equation2['k'] * equation1['k'])
+            tangent = (equation2["k"] - equation1["k"]) / (
+                1 + equation2["k"] * equation1["k"]
+            )
 
             if 0.2 < math.fabs(math.atan(tangent)) < 1.0:
                 is_circle = True
@@ -933,12 +1048,22 @@ class Figures:
                 intersection_points = [
                     lines[0].get_intersection(lines[1], median_perpendicular=True),
                     lines[1].get_intersection(lines[2], median_perpendicular=True),
-                    lines[2].get_intersection(lines[0], median_perpendicular=True)
+                    lines[2].get_intersection(lines[0], median_perpendicular=True),
                 ]
 
                 center = Point(
-                    (intersection_points[0].x + intersection_points[1].x + intersection_points[2].x) / 3,
-                    (intersection_points[0].y + intersection_points[1].y + intersection_points[2].y) / 3
+                    (
+                        intersection_points[0].x
+                        + intersection_points[1].x
+                        + intersection_points[2].x
+                    )
+                    / 3,
+                    (
+                        intersection_points[0].y
+                        + intersection_points[1].y
+                        + intersection_points[2].y
+                    )
+                    / 3,
                 )
 
                 radii = [
@@ -953,7 +1078,7 @@ class Figures:
                 if not circle.is_exist(self.__circles):
                     self.__circles.append(circle)
                 else:
-                    print('Окружность существует!')
+                    print("Окружность существует!")
                     is_circle = False
 
         return is_circle
@@ -981,21 +1106,23 @@ class Figures:
 
                 is_neighbours = False
 
-                if rectangle_side.is_perpendicular(neighbour.angle[0]) or \
-                        rectangle_side.is_perpendicular(neighbour.angle[2]):
+                if rectangle_side.is_perpendicular(
+                    neighbour.angle[0]
+                ) or rectangle_side.is_perpendicular(neighbour.angle[2]):
                     is_neighbours = True
 
                 ############
                 # ДОПИЛИТЬ #
                 ############
                 if is_neighbours:
-
                     for line in self.__lines:
                         if not rectangle_side.merge_the_lines(line):
                             continue
 
-                        if not (rectangle_side.start.distance(line.start) < 30 and
-                                rectangle_side.end.distance(line.end) < 30):
+                        if not (
+                            rectangle_side.start.distance(line.start) < 30
+                            and rectangle_side.end.distance(line.end) < 30
+                        ):
                             continue
 
                         if current not in groups:
@@ -1023,13 +1150,9 @@ class Figures:
                                             is_find = True
 
                                 if is_find:
-                                    rect = Rectangle([
-                                        current.angle[1],
-                                        other1[1],
-                                        point,
-                                        other2[1]
-                                    ],
-                                        color=(0, 255, 0)
+                                    rect = Rectangle(
+                                        [current.angle[1], other1[1], point, other2[1]],
+                                        color=(0, 255, 0),
                                     )
 
                                     # rect = Rectangle([
@@ -1076,10 +1199,10 @@ class Figures:
                         top_left_point,
                         top_right_point,
                         bottom_right_point,
-                        bottom_left_point
+                        bottom_left_point,
                     ],
                     color=(255, 0, 247),
-                    object_type='border'
+                    object_type="border",
                 )
             )
 

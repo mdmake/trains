@@ -3,6 +3,7 @@ from typing import Callable
 
 import pymunk
 
+from game.cartographer import Cartographer
 from game.navigation import NavigationSystem
 from game.sightingsystem import Laser
 from game.sightingsystem import Locator
@@ -11,10 +12,12 @@ from game.train import Train
 
 class TPlayer:
     def __init__(
-            self,
-            init_x: float | int, init_y: float | int,
-            init_alpha: float | int, method: Callable,
-            method_kwargs: dict
+        self,
+        init_x: float | int,
+        init_y: float | int,
+        init_alpha: float | int,
+        method: Callable,
+        method_kwargs: dict,
     ):
         place = [5, 15]
 
@@ -60,6 +63,8 @@ class TPlayer:
         self.locator = Locator("test_locator", full_locator_config)
         self.locator.set_measurement_method(method, **method_kwargs)
 
+        self.cartographer = Cartographer()
+
         self.train = Train("test_locator", full_train_config)
 
         self.to_laser = {}
@@ -71,6 +76,8 @@ class TPlayer:
         self.from_locator = {}
         self.from_train = {}
         self.from_navigation = {}
+
+        self.points = []
 
     def step(self):
         self.navigation.receive(self.to_navigation)
@@ -89,6 +96,20 @@ class TPlayer:
         self.locator.step()
         self.from_locator = self.locator.send()
 
+        self.points = []
+
+        if self.from_locator:
+            for point in self.from_locator["distance"]:
+                if point["measurement"]:
+                    self.points.append((point["x"], point["y"]))
+        if self.from_laser:
+            for point in self.from_laser["distance"]:
+                if point["measurement"]:
+                    self.points.append((point["x"], point["y"]))
+
+        self.cartographer.append(self.points)
+        self.cartographer.update()
+
         self.to_train["laser"] = self.from_laser
         self.to_train["locator"] = self.from_locator
 
@@ -104,13 +125,13 @@ class TPlayer:
 
 class Player:
     def __init__(
-            self,
-            *,
-            space: pymunk.Space,
-            position: tuple[float | int, float | int],
-            angle: float,
-            name: str = "Unknown Train",
-            color: tuple[int] = (0, 0, 255)
+        self,
+        *,
+        space: pymunk.Space,
+        position: tuple[float | int, float | int],
+        angle: float,
+        name: str = "Unknown Train",
+        color: tuple[int] = (0, 0, 255)
     ):
         self.space = space
 
@@ -217,6 +238,7 @@ class Player:
             "arcs": arcs,
             "laser": laser_lines,
             "locator": locator_lines,
+            "clusters": self.train.cartographer.clusters,
         }
 
         return data

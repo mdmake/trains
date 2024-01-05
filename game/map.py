@@ -1,6 +1,8 @@
-import yaml
 import datetime
 import os
+
+import yaml
+
 from geometry.geometry import Point, Circle, Rectangle, Border
 
 
@@ -9,7 +11,7 @@ class Map:
     Класс "Карта".
     """
 
-    def __init__(self, path: str):
+    def __init__(self, path: str = None):
         """
         Инициализация объекта карты.
 
@@ -19,11 +21,11 @@ class Map:
         self.__path = path
         self.__description = dict()
         self.__complete = 0
-        self.__circles = dict()
-        self.__rectangles = dict()
-        self.__border = dict()
-
-        self.load()
+        self.__circles = []
+        self.__rectangles = []
+        self.__border = []
+        if self.__path:
+            self.load()
 
     @property
     def is_complete(self) -> bool:
@@ -76,6 +78,10 @@ class Map:
         return self.__rectangles
 
     @property
+    def objects(self):
+        return self.__rectangles + self.__circles + self.__border
+
+    @property
     def path(self) -> str:
         """
         :return: Путь к файлу в виде строки.
@@ -91,7 +97,7 @@ class Map:
         как представлен здесь.
         """
 
-        return dumper.represent_sequence('tag:yaml.org,2002:seq', data, flow_style=True)
+        return dumper.represent_sequence("tag:yaml.org,2002:seq", data, flow_style=True)
 
     def load(self, path: str | None = None) -> None:
         """
@@ -102,32 +108,37 @@ class Map:
         """
 
         if not os.path.exists(self.__path):
-            raise FileExistsError('Файл с указанным именем не существует!')
+            raise FileExistsError("Файл с указанным именем не существует!")
 
-        with open(path or self.__path, 'r', encoding='utf-8') as file:
+        with open(path or self.__path, "r", encoding="utf-8") as file:
             data = yaml.safe_load(file)
             date_time = datetime.datetime.today().strftime("%H:%M:%S %d.%m.%Y")
 
             if not data:
-                raise Exception('Файл с картой пуст!')
+                raise Exception("Файл с картой пуст!")
 
-            if not data.get('description', None):
-                raise Exception('В файле с картой отсутствует описание!')
+            if not data.get("description", None):
+                raise Exception("В файле с картой отсутствует описание!")
 
-            if not data.get('border', None):
-                raise Exception('В файле отсутствуют координаты границы поля!')
+            if not data.get("border", None):
+                raise Exception("В файле отсутствуют координаты границы поля!")
 
-            self.__description['map_name'] = data['description'].get('map_name', '')
-            self.__description['date'] = data['description'].get('date', date_time)
-            self.__description['text'] = data['description'].get('text', '')
-            self.__description['complete'] = data['description'].get('complete', 0)
-            self.__complete = self.__description['complete']
+            self.__description["map_name"] = data["description"].get("map_name", "")
+            self.__description["date"] = data["description"].get("date", date_time)
+            self.__description["text"] = data["description"].get("text", "")
+            self.__description["complete"] = data["description"].get("complete", 0)
+            self.__complete = self.__description["complete"]
 
-            self.__border = data['border']
-            self.__circles = data.get('circles', dict())
-            self.__rectangles = data.get('rectangles', dict())
+            self.__border = data["border"]
+            self.__circles = data.get("circles", dict())
+            self.__rectangles = data.get("rectangles", dict())
 
-    def save(self, path: str | None = None, map_name: str | None = None, text: str | None = None) -> None:
+    def save(
+        self,
+        path: str | None = None,
+        map_name: str | None = None,
+        text: str | None = None,
+    ) -> None:
         """
         Запись карты в файл .yaml.
 
@@ -139,18 +150,20 @@ class Map:
 
         date_time = datetime.datetime.today().strftime("%H:%M:%S %d.%m.%Y")
 
-        self.__description['map_name'] = map_name or self.__description.get('map_name', '')
-        self.__description['date'] = self.__description.get('date', date_time)
-        self.__description['text'] = text or self.__description.get('text', '')
-        self.__description['complete'] = self.__complete
+        self.__description["map_name"] = map_name or self.__description.get(
+            "map_name", ""
+        )
+        self.__description["date"] = self.__description.get("date", date_time)
+        self.__description["text"] = text or self.__description.get("text", "")
+        self.__description["complete"] = self.__complete
 
-        with open(path or self.__path, 'w', encoding='utf-8') as file:
+        with open(path or self.__path, "w", encoding="utf-8") as file:
             data = dict(
                 {
                     "description": self.__description,
                     "border": self.__border,
                     "circles": self.__circles,
-                    "rectangles": self.__rectangles
+                    "rectangles": self.__rectangles,
                 }
             )
 
@@ -172,40 +185,47 @@ class Map:
         :return: True, если объект успешно добавлен в карту, иначе - False.
         """
 
-        if obj.object_type not in ('border', 'circle', 'rectangle'):
+        if obj.object_type not in ("border", "circle", "rectangle"):
             return False
 
-        if obj.object_type == 'circle':
+        if obj.object_type == "circle":
             last_obj_name = list(self.__circles.keys())[-1]
-        elif obj.object_type == 'rectangle':
+        elif obj.object_type == "rectangle":
             last_obj_name = list(self.__rectangles.keys())[-1]
         else:
             last_obj_name = obj.object_type
 
-        current_obj_name = 'border' if obj.object_type == 'border' \
+        current_obj_name = (
+            "border"
+            if obj.object_type == "border"
             else f"{obj.object_type}_{str(int(last_obj_name.split('_')[1]) + 1)}"
+        )
 
         # Если тип рассматриваемого объекта является "границей"
-        if obj.object_type == 'border' and not self.__border:
-            self.__border = [list(obj.border.rectangle[i].angle[1].point) for i in range(4)]
+        if obj.object_type == "border" and not self.__border:
+            self.__border = [
+                list(obj.border.rectangle[i].angle[1].point) for i in range(4)
+            ]
 
         # Если тип рассматриваемого объекта является "окружностью"
-        if obj.object_type == 'circle':
+        if obj.object_type == "circle":
             for circle in self.__circles:
                 current = self.__circles[circle]
 
-                if obj == Circle(Point(current['center'][0], current['center'][1]), current['radius']):
+                if obj == Circle(
+                    Point(current["center"][0], current["center"][1]), current["radius"]
+                ):
                     return False
 
             self.__circles[current_obj_name] = {
-                'center': list(obj.center.point),
-                'radius': obj.radius
+                "center": list(obj.center.point),
+                "radius": obj.radius,
             }
 
         # Если тип рассматриваемого объекта является "прямоугольником"
-        if obj.object_type == 'rectangle':
+        if obj.object_type == "rectangle":
             for rectangle in self.__rectangles:
-                current = self.rectangles[rectangle]['coordinates']
+                current = self.rectangles[rectangle]["coordinates"]
 
                 for point in current:
                     for angle in obj.rectangle:
@@ -213,7 +233,7 @@ class Map:
                             return False
 
             self.__rectangles[current_obj_name] = {
-                'coordinates': [list(obj.rectangle[i].angle[1].point) for i in range(4)]
+                "coordinates": [list(obj.rectangle[i].angle[1].point) for i in range(4)]
             }
 
         return True
