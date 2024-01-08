@@ -8,11 +8,6 @@ border:
   type: 'border'
   coordinates: [ [ 10, 10 ], [ 1270, 10 ], [ 1270, 710 ], [ 10, 710 ] ]
 
-circles:
-  circle_1:
-    center: [ 10, 10 ]
-    radius: 5
-
 rectangles:
   square_1:
     coordinates: [ [ 110.0, 10.0 ], [ 120.0, 10.0 ], [ 110.0, 110.0 ], [ 120.0, 110.0 ] ]
