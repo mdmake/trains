@@ -20,6 +20,5 @@ def test_creation():
 
     new_points = [(i * 5, i * 5) for i in range(21)]
     cartographer.append(new_points)
-    cartographer.update()
 
     assert len(cartographer.clusters) == 2
