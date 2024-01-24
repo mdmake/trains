@@ -105,8 +105,8 @@ class Cartographer:
             point = (round(item[0], 0), round(item[1], 0))
             for i, cluster in enumerate(self.clusters):
                 if (
-                    distanse2D(point, cluster.center)
-                    < cluster.radius + CLUSTER_DISTANCE
+                        distanse2D(point, cluster.center)
+                        < cluster.radius + CLUSTER_DISTANCE
                 ):
                     if cluster.belong(point):
                         cluster.append(point)
@@ -134,5 +134,8 @@ class Cartographer:
             for i in range(len(self.clusters)):
                 self.clusters[i].updated = False
 
-    def save(self):
-        pass
+    def detect(self):
+
+        for cluster in self.clusters:
+            # TODO
+            pass
