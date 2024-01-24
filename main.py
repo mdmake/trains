@@ -91,7 +91,7 @@ def on_key_release(symbol, modifiers):
 
 
 def draw_visir_lines_and_restrictions(
-    laser, generic_color, touch_color, restriction_color
+        laser, generic_color, touch_color, restriction_color
 ):
     # нарисуем лазер
     for line in laser["restrictions"]["lines"]:
@@ -161,6 +161,15 @@ def draw_cluster_points(clusters):
             sprites.append(
                 shapes.Circle(point[0], point[1], 3, color=color, batch=batch)
             )
+
+        sprites.append(
+            shapes.Circle(cluster.center[0], cluster.center[1], 3, color=color, batch=batch)
+        )
+        sprites.append(
+            shapes.Arc(
+                cluster.center[0], cluster.center[1], cluster.radius, color=color, batch=batch
+            )
+        )
 
 
 def update(dt):

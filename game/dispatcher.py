@@ -19,7 +19,7 @@ class TPlayer:
         method: Callable,
         method_kwargs: dict,
     ):
-        place = [5, 15]
+        place = [5, 0]
 
         full_train_config = {
             "tth": {
@@ -108,7 +108,7 @@ class TPlayer:
                     self.points.append((point["x"], point["y"]))
 
         self.cartographer.append(self.points)
-        self.cartographer.update()
+        # self.cartographer.update()
 
         self.to_train["laser"] = self.from_laser
         self.to_train["locator"] = self.from_locator
