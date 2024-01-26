@@ -1,4 +1,4 @@
-from math import sin, cos, radians, remainder, tau, sqrt
+from math import sin, cos, radians, remainder, tau
 from typing import Callable
 
 import yaml
@@ -10,7 +10,79 @@ from game.trainsystem import TrainSystem
 EPS = 1e-5
 
 
-class NavigationSystem(TrainSystem):
+class NavigationMixin:
+    _new_v: int | float
+    v_max: int | float
+    _new_alpha: int | float
+    alpha: int | float
+    max_angle_speed: int | float
+    x: int | float
+    y: int | float
+    method: Callable
+    method_kwargs: dict
+
+    def step_restriction(self) -> tuple[float, float, float, float, bool]:
+        """
+        Проверка возможности перемещения на новою позицию
+        """
+
+        # ограничиваем v диапазоном [0, .. self.v_max]
+        v = clamp(0.0, self._new_v, self.v_max)
+        # ограничиваем alpha диапазоном [-pi, .. pi]
+        new_alpha = remainder(self._new_alpha, tau)
+
+        if new_alpha * self.alpha > 0:
+            alpha = self.alpha + sign(new_alpha - self.alpha) * min(
+                abs(new_alpha - self.alpha), self.max_angle_speed
+            )
+        else:
+            delta = min(
+                abs(new_alpha) + abs(self.alpha),
+                tau - abs(new_alpha) - abs(self.alpha),
+                self.max_angle_speed,
+            )
+
+            # выбираем направление кратчайшего доворота:
+            if abs(new_alpha) + abs(self.alpha) < tau - abs(new_alpha) - abs(
+                self.alpha
+            ):
+                signum = sign(self.alpha) if self.alpha != 0 else sign(-new_alpha)
+                alpha = self.alpha - signum * delta
+            else:
+                alpha = self.alpha + sign(self.alpha) * delta
+
+        alpha = remainder(alpha, tau)
+
+        x0 = self.x + 0.02 * cos(alpha)
+        y0 = self.y + 0.02 * sin(alpha)
+
+        x1 = self.x + v * cos(alpha)
+        y1 = self.y + v * sin(alpha)
+
+        result = self.method((x0, y0), (x1, y1), **self.method_kwargs)
+        if v > EPS and result:
+            x, y = result.point
+
+            # идея - если мы сталкиваемся с чем-то
+            # сделав шаг - то мы не делаем этот шаг
+            x = self.x
+            y = self.y
+
+            return x, y, alpha, v, True
+        return x1, y1, alpha, v, False
+
+    def set_measurement_method(self, method: Callable, **kwargs):
+        """
+        Ссылка на метод для поиска коллизий.
+
+        :param method: Метод для измерения дальности;
+        :param kwargs: Аргументы этого метода.
+        """
+        self.method = method
+        self.method_kwargs = kwargs
+
+
+class NavigationSystem(NavigationMixin, TrainSystem):
     """
     Класс навигации выдает всем остальным подсистемам координаты и курс.
     Считывает настройки из конфига (`_load_config`)или словаря (`_unpack_config`)
@@ -74,66 +146,6 @@ class NavigationSystem(TrainSystem):
                 raise ConfigError(f"{item} not in config")
 
         self.config["max_angle_speed"] = radians(data["max_angle_speed"])
-
-    def set_measurement_method(self, method: Callable, **kwargs):
-        """
-        Ссылка на метод для поиска коллизий.
-
-        :param method: Метод для измерения дальности;
-        :param kwargs: Аргументы этого метода.
-        """
-        self.method = method
-        self.method_kwargs = kwargs
-
-    def step_restriction(self) -> tuple[float, float, float, float, bool]:
-        """
-        Проверка возможности перемещения на новою позицию
-        """
-
-        # ограничиваем v диапазоном [0, .. self.v_max]
-        v = clamp(0.0, self._new_v, self.v_max)
-        # ограничиваем alpha диапазоном [-pi, .. pi]
-        new_alpha = remainder(self._new_alpha, tau)
-
-        if new_alpha * self.alpha > 0:
-            alpha = self.alpha + sign(new_alpha - self.alpha) * min(
-                abs(new_alpha - self.alpha), self.max_angle_speed
-            )
-        else:
-            delta = min(
-                abs(new_alpha) + abs(self.alpha),
-                tau - abs(new_alpha) - abs(self.alpha),
-                self.max_angle_speed,
-            )
-
-            # выбираем направление кратчайшего доворота:
-            if abs(new_alpha) + abs(self.alpha) < tau - abs(new_alpha) - abs(
-                self.alpha
-            ):
-                signum = sign(self.alpha) if self.alpha != 0 else sign(-new_alpha)
-                alpha = self.alpha - signum * delta
-            else:
-                alpha = self.alpha + sign(self.alpha) * delta
-
-        alpha = remainder(alpha, tau)
-
-        x0 = self.x + 0.02 * cos(alpha)
-        y0 = self.y + 0.02 * sin(alpha)
-
-        x1 = self.x + v * cos(alpha)
-        y1 = self.y + v * sin(alpha)
-
-        result = self.method((x0, y0), (x1, y1), **self.method_kwargs)
-        if v > EPS and result:
-            x, y = result.point
-
-            # идея - если мы сталкиваемся с чем-то
-            # сделав шаг - то мы не делаем этот шаг
-            x = self.x
-            y = self.y
-
-            return x, y, alpha, v, True
-        return x1, y1, alpha, v, False
 
     def receive(self, query: dict):
         """
