@@ -8,6 +8,7 @@ from game.navigation import NavigationSystem
 from game.sightingsystem import Laser
 from game.sightingsystem import Locator
 from game.train import Train
+from game.weapon import Cannon, Rocket
 
 
 class TPlayer:
@@ -145,6 +146,8 @@ class Player:
         method_kwargs = {"radius": 0.01, "shape_filter": pymunk.ShapeFilter()}
         self.train = TPlayer(position[0], position[1], angle, method, method_kwargs)
         self.create_shapes()
+        self.bullets = []
+        self.rockets = []
 
     def create_shapes(self):
         self.train_shape = pymunk.Poly(
@@ -153,7 +156,6 @@ class Player:
         train_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
         self.train_shape.body = train_body
         train_body.angle = 0
-        train_body.position = 0, 0
         train_body.sensor = False
 
         self.train_shape.color = (*self.color, 255)
@@ -220,6 +222,66 @@ class Player:
 
         self.train.step()
 
+        # порождаем ракеты
+        if "rocket" in self.train.from_train:
+            fire_rocket = self.train.from_train["rocket"].get("fire_rocket", False)
+        else:
+            fire_rocket = False
+
+        if fire_rocket:
+            rocket = Rocket(
+                x=self.train.from_navigation["x"],
+                y=self.train.from_navigation["y"],
+                alpha=self.train.from_navigation["alpha"],
+                v=5,
+                target_x=self.train.from_train["rocket"]["target"]["x"],
+                target_y=self.train.from_train["rocket"]["target"]["y"],
+            )
+
+            rocket.set_measurement_method(
+                self.space.segment_query_first,
+                **{"radius": 0.01, "shape_filter": pymunk.ShapeFilter()},
+            )
+
+            self.rockets.append(rocket)
+        self.rockets = [rocket for rocket in self.rockets if rocket.alive]
+
+        for rocket in self.rockets:
+            rocket.step()
+            rocket.update_target(
+                self.train.from_train["rocket"]["target"]["x"],
+                self.train.from_train["rocket"]["target"]["y"],
+            )
+
+        # порождаем снаряды
+        if "cannon" in self.train.from_train:
+            fire_cannon = self.train.from_train["cannon"].get("fire_cannon", False)
+        else:
+            fire_cannon = False
+
+        if fire_cannon:
+            bullet = Cannon(
+                x=self.train.from_navigation["x"],
+                y=self.train.from_navigation["y"],
+                alpha=self.train.from_navigation["alpha"],
+                v=5,
+                max_lifetime=30,
+            )
+
+            # method = self.space.segment_query_first
+            # method_kwargs = {"radius": 0.01, "shape_filter": pymunk.ShapeFilter()}
+            bullet.set_measurement_method(
+                self.space.segment_query_first,
+                **{"radius": 0.01, "shape_filter": pymunk.ShapeFilter()},
+            )
+
+            self.bullets.append(bullet)
+
+        self.bullets = [bullet for bullet in self.bullets if bullet.alive]
+
+        for bullet in self.bullets:
+            bullet.step()
+
         lines = []
         arcs = []
 
@@ -239,6 +301,8 @@ class Player:
             "laser": laser_lines,
             "locator": locator_lines,
             "clusters": self.train.cartographer.clusters,
+            "bullets": [bullet.send() for bullet in self.bullets],
+            "rockets": [rocket.send() for rocket in self.rockets],
         }
 
         return data

@@ -3,7 +3,7 @@ from math import radians
 import pyglet
 import pymunk
 from pyglet import shapes
-from pyglet.window import key
+from pyglet.window import key, mouse
 from pymunk.pyglet_util import DrawOptions
 
 from game.dispatcher import Player
@@ -40,6 +40,7 @@ player = Player(space=space, position=player_position, angle=player_angle)
 players.append(player)
 
 key_vector = {"x": 0.0, "y": 0.0, "alpha": 0.0}
+target = {"x": width // 2, "y": height // 2}
 
 
 @window.event
@@ -68,6 +69,13 @@ def send_to_train():
         if key.DOWN in keys:
             key_vector["v"] = -2
 
+        if key.F in keys:
+            key_vector["fire_cannon"] = True
+        if key.R in keys:
+            key_vector["fire_rocket"] = True
+
+        key_vector["target"] = target
+
         player.train.train.external(**key_vector)
 
 
@@ -87,11 +95,23 @@ def on_key_release(symbol, modifiers):
                 item.train.train.auto = True
 
 
+@window.event
+def on_mouse_press(x, y, button, modifiers):
+    if button == mouse.LEFT:
+        target["x"] = x
+        target["y"] = y
+
+
+@window.event
+def on_mouse_release(x, y, button, modifiers):
+    pass
+
+
 # object_count
 
 
 def draw_visir_lines_and_restrictions(
-        laser, generic_color, touch_color, restriction_color
+    laser, generic_color, touch_color, restriction_color
 ):
     # нарисуем лазер
     for line in laser["restrictions"]["lines"]:
@@ -163,13 +183,37 @@ def draw_cluster_points(clusters):
             )
 
         sprites.append(
-            shapes.Circle(cluster.center[0], cluster.center[1], 3, color=color, batch=batch)
+            shapes.Circle(
+                cluster.center[0], cluster.center[1], 3, color=color, batch=batch
+            )
         )
         sprites.append(
             shapes.Arc(
-                cluster.center[0], cluster.center[1], cluster.radius, color=color, batch=batch
+                cluster.center[0],
+                cluster.center[1],
+                cluster.radius,
+                color=color,
+                batch=batch,
             )
         )
+
+
+def draw_bullet(bullets):
+    for bullet in bullets:
+        sprites.append(
+            shapes.Circle(bullet["x"], bullet["y"], 5, color=(100, 0, 0), batch=batch)
+        )
+
+
+def draw_rocket(rockets):
+    for bullet in rockets:
+        sprites.append(
+            shapes.Circle(bullet["x"], bullet["y"], 5, color=(100, 0, 0), batch=batch)
+        )
+
+    sprites.append(
+        shapes.Circle(target["x"], target["y"], 10, color=(255, 0, 0), batch=batch)
+    )
 
 
 def update(dt):
@@ -234,6 +278,8 @@ def update(dt):
         )
 
         draw_cluster_points(data["clusters"])
+        draw_bullet(data["bullets"])
+        draw_rocket(data["rockets"])
 
         item.train_body.angle = item.train.from_navigation["alpha"] - radians(90)
         item.train_body.position = (

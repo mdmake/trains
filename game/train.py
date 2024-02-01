@@ -9,6 +9,7 @@ from game.trainsystem import TrainSystem
 
 class Train(TrainSystem):
     def __init__(self, name: str, config: str | dict):
+        self.target = {"x": 0, "y": 0}
         self.id = uuid.uuid4()
 
         self.alpha = None
@@ -33,6 +34,11 @@ class Train(TrainSystem):
 
         self.auto = True
         self.memory = None
+
+        self.alive = True
+
+        self.fire_cannon = False
+        self.fire_rocket = False
 
     def _unpack_config(self, data: dict):
         self.config = data.copy()
@@ -89,6 +95,10 @@ class Train(TrainSystem):
 
             self.alpha = remainder(self.alpha + self.memory.get("delta_alpha", 0), tau)
             self.v = max(self.v + self.memory.get("delta_v", 0), 0)
+            self.fire_cannon = self.memory.get("fire_cannon", False)
+            self.fire_rocket = self.memory.get("fire_rocket", False)
+            if "target" in self.memory:
+                self.target = self.memory["target"]
 
             self.query_data = {"locator": {}}
             self.query_data["locator"]["turn"] = self.locator_alpha
@@ -102,6 +112,13 @@ class Train(TrainSystem):
             self.query_data["navigation"]["v"] = self.v
             self.query_data["navigation"]["alpha"] = self.alpha
 
+            self.query_data["cannon"] = {}
+            self.query_data["cannon"]["fire_cannon"] = self.fire_cannon
+
+            self.query_data["rocket"] = {}
+            self.query_data["rocket"]["fire_rocket"] = self.fire_rocket
+            self.query_data["rocket"]["target"] = self.target
+
             self.memory = {}
 
     def external(self, **kwargs: dict):
@@ -112,4 +129,9 @@ class Train(TrainSystem):
         self.memory = {
             "delta_alpha": remainder(kwargs.get("alpha", 0), tau),
             "delta_v": kwargs.get("v", 0),
+            "fire_cannon": kwargs.get("fire_cannon", False),
+            "fire_rocket": kwargs.get("fire_rocket", False),
         }
+
+        if "target" in kwargs:
+            self.memory["target"] = kwargs["target"]
