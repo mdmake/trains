@@ -1,4 +1,5 @@
 import itertools
+import random
 
 import numpy as np
 
@@ -86,6 +87,8 @@ class Cluster:
                 item,
             ]
         )
+        if len(self.points)>10 and (self.type is None or self.type != "unknown"):
+            self.detect()
         self.updated = True
 
     def __iter__(self):
@@ -100,12 +103,21 @@ class Cluster:
 
     def detect(self):
 
+        sample_size = 10
         test_results = {'nc': 0, 'sl': 0, 'nsl': 0}
+        start = random.randint(0,len(self.points) - sample_size- 1)
+        cluster_sample = range(start,start+sample_size+1)
 
-        cluster_sample = np.random.choice(self.points, size=9, replace=False)
 
+        itr = list(itertools.combinations(cluster_sample, 3))
+        i=0
         while test_results['sl'] == 0 or test_results['nsl'] < 10:
-            (x_1, x_2, x_3) = itertools.combinations(cluster_sample, 3)
+            if i<len(itr):
+                indices = itr[i]
+                i+=1
+            else:
+                break
+            x_1,x_2,x_3 = self.points[indices[0]],self.points[indices[1]],self.points[indices[2]]
             dist_1 = abs((x_2[1] - x_1[1]) * x_3[0] - (x_2[0] - x_1[0]) * x_3[1] + x_2[0] * x_1[1] - x_2[1] * x_1[0])
             dist_2 = ((x_2[0] - x_1[0]) ** 2 + (x_2[1] - x_1[1]) ** 2) ** 0.5
             if abs(x_2[0] - x_1[0]) + abs(x_2[1] - x_1[1]) < DELTA \
@@ -121,9 +133,11 @@ class Cluster:
             else:
                 test_results['nsl'] += 1
         if test_results['sl'] > 0:
+            print('type polygon')
             self.type = 'polygon'
         elif test_results['nsl'] > 9:
             self.type = 'circle'
+            print('type circle')
         else:
             self.type = 'unknown'
 
