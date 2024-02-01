@@ -1,11 +1,12 @@
 import itertools
 
-from game.map import Map
-from game.mathfunction import distanse2D
 import numpy as np
 
+from game.map import Map
+from game.mathfunction import distanse2D
+
 CLUSTER_DISTANCE = 20
-DELTA = 20 #
+DELTA = 20  #
 
 
 class Cluster:
@@ -15,7 +16,7 @@ class Cluster:
         self.center = None
         self.radius = None
         self.updated = False
-        self.type=None
+        self.type = None
 
         if points:
             self.points = [
@@ -94,6 +95,38 @@ class Cluster:
     def __next__(self):
         return next(self.itr)
 
+    def __len__(self):
+        return len(self.points)
+
+    def detect(self):
+
+        test_results = {'nc': 0, 'sl': 0, 'nsl': 0}
+
+        cluster_sample = np.random.choice(self.points, size=9, replace=False)
+
+        while test_results['sl'] == 0 or test_results['nsl'] < 10:
+            (x_1, x_2, x_3) = itertools.combinations(cluster_sample, 3)
+            dist_1 = abs((x_2[1] - x_1[1]) * x_3[0] - (x_2[0] - x_1[0]) * x_3[1] + x_2[0] * x_1[1] - x_2[1] * x_1[0])
+            dist_2 = ((x_2[0] - x_1[0]) ** 2 + (x_2[1] - x_1[1]) ** 2) ** 0.5
+            if abs(x_2[0] - x_1[0]) + abs(x_2[1] - x_1[1]) < DELTA \
+                    or abs(x_3[0] - x_1[0]) + abs(x_3[1] - x_1[1]) < DELTA \
+                    or abs(x_2[0] - x_3[0]) + abs(x_2[1] - x_3[1]) < DELTA:
+                test_results['nc'] += 1
+            elif abs(x_1[0] - x_2[0]) < DELTA and abs(x_1[0] - x_3[0]) < DELTA:
+                test_results['sl'] += 1
+            elif abs(x_1[1] - x_2[1]) < DELTA and abs(x_1[1] - x_3[1]) < DELTA:
+                test_results['sl'] += 1
+            elif dist_1 / dist_2 < DELTA:
+                test_results['sl'] += 1
+            else:
+                test_results['nsl'] += 1
+        if test_results['sl'] > 0:
+            self.type = 'polygon'
+        elif test_results['nsl'] > 9:
+            self.type = 'circle'
+        else:
+            self.type = 'unknown'
+
 
 class Cartographer:
     def __init__(self, map: Map = None):
@@ -139,32 +172,10 @@ class Cartographer:
             for i in range(len(self.clusters)):
                 self.clusters[i].updated = False
 
+
     def detect(self):
-
         for cluster in self.clusters:
-            test_results = {'nc':0, 'sl':0, 'nsl':0}
-            cluster_sample = np.random.choice(cluster.points, size=9, replace=False)
-
-            while test_results['sl'] == 0 or test_results['nsl']<10:
-                (x_1, x_2, x_3)=itertools.combinations(cluster_sample, 3)
-                dist_1 = abs((x_2[1] - x_1[1]) * x_3[0] - (x_2[0] - x_1[0]) * x_3[1] + x_2[0] * x_1[1] - x_2[1] * x_1[0])
-                dist_2 = ((x_2[0]-x_1[0])**2+(x_2[1]-x_1[1])**2)**0.5
-                if abs(x_2[0]-x_1[0])+abs(x_2[1]-x_1[1])<DELTA\
-                        or abs(x_3[0]-x_1[0])+abs(x_3[1]-x_1[1])<DELTA\
-                        or abs(x_2[0]-x_3[0])+abs(x_2[1]-x_3[1])<DELTA:
-                    test_results['nc']+=1
-                elif abs(x_1[0]-x_2[0]) < DELTA and abs(x_1[0]-x_3[0]) < DELTA:
-                    test_results['sl']+=1
-                elif abs(x_1[1]-x_2[1]) < DELTA and abs(x_1[1]-x_3[1]) < DELTA:
-                    test_results['sl']+=1
-                elif dist_1/dist_2 < DELTA:
-                    test_results['sl']+=1
-                else:
-                    test_results['nsl']+=1
-            if test_results['sl']>0:
-                self.type = 'polygon'
-            elif test_results['nsl']>9:
-                self.type = 'circle'
-            else:
-                self.type = 'unknown'
+            if cluster.type is None or cluster.type != "unknown":
+                if len(cluster) > 10:
+                    cluster.detect()
 

@@ -177,6 +177,9 @@ def draw_cluster_points(clusters):
     color_map = getDistinctColors(len(clusters))
 
     for color, cluster in zip(color_map, clusters):
+        if cluster.type is not None and cluster.type != "unknown":
+            color = (0, 255, 0)
+
         for point in cluster:
             sprites.append(
                 shapes.Circle(point[0], point[1], 3, color=color, batch=batch)

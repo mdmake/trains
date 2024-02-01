@@ -90,11 +90,11 @@ class Train(TrainSystem):
             self.query_data["navigation"]["alpha"] = self.alpha
 
         else:
-            self.locator_alpha = remainder(self.locator_alpha + radians(1), tau)
+            self.locator_alpha = remainder(self.alpha + radians(40), tau)
             self.laser_alpha = remainder(self.alpha, tau)
 
             self.alpha = remainder(self.alpha + self.memory.get("delta_alpha", 0), tau)
-            self.v = max(self.v + self.memory.get("delta_v", 0), 0)
+            self.v = max(self.memory.get("delta_v", 0)*5, 0)
             self.fire_cannon = self.memory.get("fire_cannon", False)
             self.fire_rocket = self.memory.get("fire_rocket", False)
             if "target" in self.memory:

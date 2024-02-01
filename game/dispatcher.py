@@ -109,6 +109,8 @@ class TPlayer:
                     self.points.append((point["x"], point["y"]))
 
         self.cartographer.append(self.points)
+        self.cartographer.detect()
+
         # self.cartographer.update()
 
         self.to_train["laser"] = self.from_laser
