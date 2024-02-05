@@ -1,7 +1,6 @@
 import math
 from typing import Optional
-from game.types import ObjectType
-from game.colors import Color
+from game.enumerators import ObjectType, Color
 
 TOLERANCE = 3
 ANGLE_TOLERANCE = 0.2
